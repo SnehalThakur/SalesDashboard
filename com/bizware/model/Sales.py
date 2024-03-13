@@ -1,3 +1,8 @@
+"""
+Copyright (c) 2024 - Bizware International
+"""
+from typing import Optional, Union, Dict, List
+
 from pydantic.dataclasses import dataclass
 # from pydantic.tools import parse_obj_as
 from pydantic import BaseModel, Field, parse_obj_as
@@ -5,7 +10,46 @@ import json
 from pydantic import BaseModel, Field
 
 companyDict = {
-    1000: "Aish Connect"
+    1000: "AISHWARYA HEALTHCARE",
+    2000: 'AISHWARYA LIFESCIENCES',
+    3000: 'CELEBRITY BIOPHARMA LTD.'
+}
+
+plantDict ={
+    0o001: 'Werk 0001',
+    0o003: 'Plant 0003 (is-ht-sw)',
+    1000:	'Aishwarya Healthcare',
+    1101:	'Aishwarya Healthcare',
+    1102:	'Aishwarya Healthcare',
+    1200:	'Aishwarya Healthcare',
+    1301:	'Aishwarya Healthcare C&F',
+    1302:	'Aishwarya Healthcare C&F',
+    1303:	'Aishwarya Healthcare C&F',
+    1304:	'Aishwarya Healthcare C&F',
+    1305:	'Aishwarya Healthcare C&F',
+    1307:	'Aishwarya Healthcare C&F',
+    2100:	'Aishwarya Lifesciences',
+    2101:	'Aishwarya Lifesciences',
+    2102:	'Aishwarya Lifesciences',
+    2103:	'Aishwarya Lifesciences',
+    2200:	'Aishwarya Lifesciences',
+    3100:	'Celebrity Biopharma Limited',
+    3200:	'Celebrity Biopharma Limited',
+    3301:	'Celebrity Biopharma Limited',
+    3302:	'Celebrity Biopharma Limited',
+    3303:	'Celebrity Biopharma ltd. C&F',
+    3305:	'Celebrity Biopharma ltd. C&F',
+    3306:	'Celebrity Biopharma ltd. C&F',
+    3307:	'Celebrity Biopharma ltd. C&F',
+    3309:	'Celebrity Biopharma ltd. C&F',
+    3310:	'Celebrity Biopharma ltd. C&F',
+    3311:	'Celebrity Biopharma ltd. C&F',
+    3314:	'Celebrity Biopharma ltd. C&F',
+    3315:	'Celebrity Biopharma ltd. C&F',
+    3316:	'Celebrity Biopharma ltd. C&F',
+    3318:	'Celebrity Biopharma ltd. C&F',
+    3319:	'Celebrity Biopharma ltd. C&F',
+    3320:	'Celebrity Biopharma ltd. C&F'
 }
 
 
@@ -35,6 +79,44 @@ class Sales(BaseModel):
     distributionChannel: int = Field(..., alias='Distribution Channel')
     salesEmpolyee: str = Field(..., alias='Sales Empolyee')
     hqCode: str = Field(..., alias='HQ Code')
+
+
+
+# Month	Year	ZONE	Employee Code	Employee Name	Employee Designation	HOD Emp code	HOD Name	Country	Region/State	HQ	HQ Code	City	Division	Monthly sales Target
+
+class SecondarySales(BaseModel):
+    month: str = Field(..., alias='Month')
+    year: str = Field(..., alias='Year')
+    zone: str = Field(..., alias='ZONE')
+    employeeCode: str = Field(..., alias='Employee Code')
+    employeeName: str = Field(..., alias='Employee Name')
+    employeeDesignation: str = Field(..., alias='Employee Designation')
+    hodEmployeeCode: str = Field(..., alias='HOD Emp code')
+    hodName: str = Field(..., alias='HOD Name')
+    country: str = Field(..., alias='Country')
+    regionState: str = Field(..., alias='Region/State')
+    hq: str = Field(..., alias='HQ')
+    hqCode: str = Field(..., alias='HQ Code')
+    city: str = Field(..., alias='City')
+    division: str = Field(..., alias='Division')
+    monthlySalesTarget: str = Field(..., alias='Monthly sales Target')
+
+class SalesResponse(BaseModel):
+    salesData: Optional[Union[str, List[Dict], Dict]] = None
+    year: str
+    zone: str
+    employeeCode:  Optional[Union[str, Dict, List]] = None
+    employeeName: str = Field(..., alias='Employee Name')
+    employeeDesignation: str = Field(..., alias='Employee Designation')
+    hodEmployeeCode: str = Field(..., alias='HOD Emp code')
+    hodName: str = Field(..., alias='HOD Name')
+    country: str = Field(..., alias='Country')
+    regionState: str = Field(..., alias='Region/State')
+    hq: str = Field(..., alias='HQ')
+    hqCode: str = Field(..., alias='HQ Code')
+    city: str = Field(..., alias='City')
+    division: str = Field(..., alias='Division')
+    monthlySalesTarget: str = Field(..., alias='Monthly sales Target')
 
 
 # sales = Sales(invoiceNumber='0090000609', invoiceDate='16-08-2023', companyCode='1000', companyName='aish',

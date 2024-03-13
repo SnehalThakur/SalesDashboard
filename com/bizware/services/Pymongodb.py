@@ -7,6 +7,7 @@ from pymongo import MongoClient
 import urllib.parse
 import pandas as pd
 import com.bizware.model.Sales as sales
+import com.bizware.model.CustomerAgeing as ageing
 
 # Provide the mongodb atlas url to connect python to mongodb using pymongo
 # MYSQL_DATABASE_URL = f"mysql://{settings.database_username}:{settings.database_password}@{settings.database_port}/{settings.database_name}"
@@ -49,7 +50,11 @@ def loadData(collection_name, datafile):
 # Load sales data
 def loadSalesData(collection_name, datafile):
     data = pd.read_csv(datafile, encoding='cp1252')
-    salesColumns = data[['Company Code', 'Invoice No.', 'Invoice Date', 'Billing Type', 'Plant', 'Plant Name', 'Division', 'Division Description', 'Bill To State Code', 'Bill to State Name', 'Ship To District', 'Ship To City', 'Item Code', 'Item Description', 'HSN Code', 'Batch Number', 'Sale Unit (UOM)', 'Batch Quantity', 'Net Amount', 'Total Amt After Tax', 'Grand Total', 'Distribution Channel', 'Sales Empolyee', 'HQ Code']]
+    salesColumns = data[
+        ['Company Code', 'Invoice No.', 'Invoice Date', 'Billing Type', 'Plant', 'Plant Name', 'Division',
+         'Division Description', 'Bill To State Code', 'Bill to State Name', 'Ship To District', 'Ship To City',
+         'Item Code', 'Item Description', 'HSN Code', 'Batch Number', 'Sale Unit (UOM)', 'Batch Quantity', 'Net Amount',
+         'Total Amt After Tax', 'Grand Total', 'Distribution Channel', 'Sales Empolyee', 'HQ Code']]
     salesColumns['Company Name'] = salesColumns['Company Code'].map(sales.companyDict)
     salesColumns = salesColumns.fillna('')
     salesColumns = salesColumns.to_dict(orient='records')
@@ -58,8 +63,8 @@ def loadSalesData(collection_name, datafile):
         salesObj = sales.setSalesData(sale)
         salesDataList.append(salesObj)
     print('Inserting salesDataList to MongoDB -', salesDataList)
-    # collection_name.insert_many(salesDataList)
-    print('Inserting salesDataList Done')
+    collection_name.insert_many(salesDataList)
+    print('Inserted salesDataList Data')
     return salesDataList
 
 
@@ -78,16 +83,23 @@ if __name__ == "__main__":
     dbname = get_database()
 
     # Retrieve a collection named "salesdata" from database
-    collection_name = dbname["salesdatanew"]
+    sales_collection_name = dbname["sales_data"]
 
     # createTableUniqueIndex(collection_name)
 
-    datafile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\ZSD_LOG_08-03-2024.csv'
-    loadSalesData(collection_name, datafile)
-    # loadData(collection_name,
-    #          r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non SAP_22nd_Feb.csv')
+    saleDatafile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\ZSD_LOG_08-03-2024.csv'
+    loadSalesData(sales_collection_name, saleDatafile)
+    # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non SAP_22nd_Feb.csv')
 
-    item_details = collection_name.find()
+    ageingDataFile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\CustomerAgening11.03.2024.csv'
+    customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
+
+    ageing_master_collection_name = dbname["ageing_master_data"]
+    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
+
+    ageing_collection_name = dbname["ageing_data"]
+    # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
+    item_details = ageing_collection_name.find()
     # for item in item_details:
     #     # This does not give a very readable output
     #     print(item)
