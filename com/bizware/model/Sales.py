@@ -101,22 +101,22 @@ class SecondarySales(BaseModel):
     division: str = Field(..., alias='Division')
     monthlySalesTarget: str = Field(..., alias='Monthly sales Target')
 
+
+# {"salesData": SalesResponse, "year": SalesRequest.year, "month": SalesRequest.month, "companyCode": SalesRequest.companyCode,
+#                 "sales": "Sales Value", "salesTarget": "targetSalesValue", "targetAchievement": "Target ach value", "salesLastYear": "Sales last yr value", "account"}
 class SalesResponse(BaseModel):
     salesData: Optional[Union[str, List[Dict], Dict]] = None
     year: str
-    zone: str
-    employeeCode:  Optional[Union[str, Dict, List]] = None
-    employeeName: str = Field(..., alias='Employee Name')
-    employeeDesignation: str = Field(..., alias='Employee Designation')
-    hodEmployeeCode: str = Field(..., alias='HOD Emp code')
-    hodName: str = Field(..., alias='HOD Name')
-    country: str = Field(..., alias='Country')
-    regionState: str = Field(..., alias='Region/State')
-    hq: str = Field(..., alias='HQ')
-    hqCode: str = Field(..., alias='HQ Code')
-    city: str = Field(..., alias='City')
-    division: str = Field(..., alias='Division')
-    monthlySalesTarget: str = Field(..., alias='Monthly sales Target')
+    month: str
+    companyCode: str
+    sales: str
+    salesTarget:  Optional[Union[str, Dict, List]] = None
+    targetAchievement: str = None
+    salesLastYear: str = None
+    accountReceivables: str = None
+    overdueReceivablesVal: str = None
+    overdueReceivablesPct: str = None
+
 
 
 # sales = Sales(invoiceNumber='0090000609', invoiceDate='16-08-2023', companyCode='1000', companyName='aish',

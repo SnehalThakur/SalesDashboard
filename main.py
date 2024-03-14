@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from typing import Union
+from pydantic import BaseModel, Field, parse_obj_as
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 import uvicorn
@@ -15,6 +16,7 @@ from com.bizware.services import Pymongodb
 from com.bizware.utils.AWSS3Util import s3_upload, SUPPORTED_FILE_TYPES, s3_download, s3_download_file
 from bson import json_util
 import json
+
 counter = 1
 
 
@@ -42,13 +44,10 @@ def getS3File():
 # app = FastAPI(lifespan=lifespan)
 app = FastAPI()
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-
 
 @app.get("/")
 def read_root():
-    return {"Hello": "Bizware World"}
+    return {"Hello": "Bizware International"}
 
 
 @app.get("/items/{item_id}")
@@ -93,8 +92,9 @@ async def getSalesData():
     salesData = Pymongodb.getData(collectionName)
 
     response = json.loads(json_util.dumps(salesData))
-    return {'output': response}\
-
+    return {'output': response} \
+ \
+ \
 @app.get('/sales-data')
 async def getSalesData():
     # Get the database
@@ -109,14 +109,36 @@ async def getSalesData():
     return {'output': response}
 
 
+class SalesRequest(BaseModel):
+    year: str = None
+    month: str = None
+    companyCode: str = None
+
+
+@app.post('/sales-data')
+async def getSalesData(request: SalesRequest):
+    # Get the database
+    dbname = Pymongodb.get_database()
+    # Retrieve a collection named "sales_data" from database
+    collectionName = dbname["sales_data"]
+    salesData = Pymongodb.getData(collectionName)
+    SalesResponse = json.loads(json_util.dumps(salesData))
+    response = {"salesData": SalesResponse, "year": SalesRequest.year, "month": SalesRequest.month, "companyCode": SalesRequest.companyCode,
+                "sales": "Sales Value", "salesTarget": "targetSalesValue", "targetAchievement": "Target ach value", "salesLastYear": "Sales last yr value",
+                "accountReceivables": 'accountReceivables Value', "overdueReceivablesVal": "overdueReceivablesVal", "overdueReceivablesPct": "overdueReceivablesPct"}
+    # datafile = 'com/bizware/data/ZSD_LOG_08-03-2024.csv'
+    # response = Pymongodb.loadSalesData('saleswoman', datafile)
+    return {'output': response}
+
+
 @app.get('/customer-ageing-data')
 async def getSalesData():
     # Get the database
     dbname = Pymongodb.get_database()
     # Retrieve a collection named "ageing_data" from database
     collectionName = dbname["ageing_data"]
-    salesData = Pymongodb.getData(collectionName)
-    response = json.loads(json_util.dumps(salesData))
+    ageingData = Pymongodb.getData(collectionName)
+    response = json.loads(json_util.dumps(ageingData))
 
     return {'output': response}
 
@@ -127,8 +149,8 @@ async def getSalesData():
     dbname = Pymongodb.get_database()
     # Retrieve a collection named "ageing_master_data" from database
     collectionName = dbname["ageing_master_data"]
-    salesData = Pymongodb.getData(collectionName)
-    response = json.loads(json_util.dumps(salesData))
+    ageingData = Pymongodb.getData(collectionName)
+    response = json.loads(json_util.dumps(ageingData))
 
     return {'output': response}
 
@@ -149,3 +171,7 @@ async def download(file_name: str | None = None):
             'Content-Type': 'application/octet-stream',
         }
     )
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

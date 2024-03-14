@@ -23,3 +23,10 @@ sudo nano /etc/nginx/sites-available/fastapi_nginx
 
 sudo service nginx restart
 
+
+git status
+
+git commit -m "Commit msg"
+
+git push -u origin master
+
