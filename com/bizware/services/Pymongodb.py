@@ -47,15 +47,28 @@ def loadData(collection_name, datafile):
     collection_name.insert_many(datadict)
 
 
+# Invno.,BillingTyp,CompCode,Plant,PlantName,HeadOffice,InvDate,TaxInvNo.,ActDocNo.,Bill2Party,Bil2PrtNme,Bil2PrtPAN,PartyGSTNo,BillStatCd,BillStatNm,Bill2Distc,Ship2Party,ShpPrtyNm,Shp2PAN,
+# Shp2GSTNo,Shp2StatCd,ShpStatNme,Shp2Dist,Shp2City,PayToParty,Pay2PrtNme,MatGroup1,MatGrp1Des,LineItemNo,ItemCode,ItemDes,HSNCode,BatchNo,UOM,BatchQnt,FreeSale,MfgDate,ExpDate,ExcRate,MRP,PTR,SalesRate,
+# SalesAmnt,Discnt%,DiscntAmnt,NetAmt,PlateChrgs,Freight,TaxableAmt,IGSTRate,IGSTAmount,CGSTRate,CGSTAmount,SGSTRate,SGSTAmount,TAmtAftTax,TCSBase,TCSAmount,RoundOff,GrandTotal,PrtOrderNo,PatOrdDte,VehclNo,
+# LRNo,TrnsprtNam,PymntTerm,NoofBoxes,GrsWightof,DistrnChnl,Division,DivDiscri,SalesOffic,SlsOffDes,SalesGroup,SalsGrpDes,MatGrp,MatGrpDesc,IRNNo,AcknowleNo,EwayBillNo,ShipmentNo,ShipCost,FreightAmn,SerEntrySh,
+#     FreightPON,SalesEmply,HQCode,HospName
+
+
+
 # Load sales data
 def loadSalesData(collection_name, datafile):
     data = pd.read_csv(datafile, encoding='cp1252')
     salesColumns = data[
-        ['Company Code', 'Invoice No.', 'Invoice Date', 'Billing Type', 'Plant', 'Plant Name', 'Division',
-         'Division Description', 'Bill To State Code', 'Bill to State Name', 'Ship To District', 'Ship To City',
-         'Item Code', 'Item Description', 'HSN Code', 'Batch Number', 'Sale Unit (UOM)', 'Batch Quantity', 'Net Amount',
-         'Total Amt After Tax', 'Grand Total', 'Distribution Channel', 'Sales Empolyee', 'HQ Code']]
-    salesColumns['Company Name'] = salesColumns['Company Code'].map(sales.companyDict)
+        ['CompCode', 'Invno.', 'InvDate', 'BillingTyp', 'Plant', 'PlantName', 'Division',
+         'DivDiscri', 'BillStatCd', 'BillStatNm', 'Bill2Distc', 'Ship2Party', 'ShpPrtyNm',
+         'ItemCode', 'ItemDes', 'HSNCode', 'BatchNo', 'UOM', 'BatchQnt', 'NetAmt',
+         'TAmtAftTax', 'GrandTotal', 'DistrnChnl', 'SalesEmply', 'HQCode']]
+
+    salesColumns['CompanyName'] = salesColumns['CompCode'].map(sales.companyDict)
+    salesColumns[
+        ['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode', 'DistrnChnl']] = \
+        salesColumns[['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode',
+                      'DistrnChnl']].fillna(0)
     salesColumns = salesColumns.fillna('')
     salesColumns = salesColumns.to_dict(orient='records')
     salesDataList = []
@@ -63,9 +76,97 @@ def loadSalesData(collection_name, datafile):
         salesObj = sales.setSalesData(sale)
         salesDataList.append(salesObj)
     print('Inserting salesDataList to MongoDB -', salesDataList)
-    collection_name.insert_many(salesDataList)
-    print('Inserted salesDataList Data')
+    f = open("salesData.txt", "w")
+    f.write(str(salesDataList))
+    f.close()
+    # collection_name.insert_many(salesDataList)
+    print('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
+
+
+def getTotalSale():
+    totalSales = {"MoM": "50.99",
+                  "MoMPct": "43",
+                  "YoY": "99.96",
+                  "YoYPct": "43"}
+    return totalSales
+
+
+def getSalesTarget():
+    salesTarget = {"MoM": "80.94",
+                   "MoMPct": "43",
+                   "YoY": "90.96",
+                   "YoYPct": "43"}
+    return salesTarget
+
+
+def getTargetAchievement():
+    targetAchievement = {"MoM": "90.99",
+                         "MoMPct": "43",
+                         "YoY": "99.96",
+                         "YoYPct": "43"}
+    return targetAchievement
+
+
+def getSalesLastYear():
+    salesLastYear = {"MoM": "50.99",
+                     "MoMPct": "43",
+                     "YoY": "99.96",
+                     "YoYPct": "43"}
+    return salesLastYear
+
+
+def getAccountReceivables():
+    accountReceivables = {"accountReceivablesVal": "90.99",
+                          "accountReceivablesPct": "43"}
+    return accountReceivables
+
+
+def getOverdueReceivables():
+    overdueReceivables = {"overdueReceivablesVal": "90.99",
+                          "overdueReceivablesPct": "43"}
+    return overdueReceivables
+
+
+def getTopProducts():
+    topProducts = []
+    return topProducts
+
+
+def getTopDivisions():
+    topDivisions = []
+    return topDivisions
+
+
+def getTop5Performers():
+    top5Performers = []
+    return top5Performers
+
+
+def getSaleDataByYearMonthCompanyCode(request):
+    itemList = []
+    # get database obj
+    dbname = get_database()
+
+    # Retrieve a collection named "sales_data" from database
+    collection_name = dbname["sales_data"]
+    itemDetails = collection_name.find()
+    for item in itemDetails:
+        # This does not give a very readable output
+        itemList.append(item)
+
+    salesDataDict = {"salesData": itemList,
+                     "totalSales": getTotalSale(),
+                     "salesTarget": getSalesTarget(),
+                     "targetAchievement": getTargetAchievement(),
+                     "salesLastYear": getSalesLastYear(),
+                     "accountReceivables": getAccountReceivables(),
+                     "overdueReceivables": getOverdueReceivables(),
+                     "topProducts": getTopProducts(),  # list
+                     "topDivisions": getTopDivisions(),  # list
+                     "top5Performers": getTop5Performers()  # list
+                     }
+    return salesDataDict
 
 
 def getData(collectionName):
@@ -87,19 +188,24 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\ZSD_LOG_08-03-2024.csv'
+    saleDatafile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\ZSDLOGNNN.csv'
     loadSalesData(sales_collection_name, saleDatafile)
-    # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non SAP_22nd_Feb.csv')
+    # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
+    # SAP_22nd_Feb.csv')
 
-    ageingDataFile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\CustomerAgening11.03.2024.csv'
+    ageingDataFile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\ZSDFICUSTAGENN.csv'
     customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
 
-    ageing_master_collection_name = dbname["ageing_master_data"]
-    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
 
-    ageing_collection_name = dbname["ageing_data"]
+    # ageing_master_collection_name = dbname["ageing_master_data"]
+    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
+    #
+    # ageing_collection_name = dbname["ageing_data"]
     # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
-    item_details = ageing_collection_name.find()
+
+
+
+    # item_details = ageing_collection_name.find()
     # for item in item_details:
     #     # This does not give a very readable output
     #     print(item)

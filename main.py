@@ -16,7 +16,7 @@ from com.bizware.services import Pymongodb
 from com.bizware.utils.AWSS3Util import s3_upload, SUPPORTED_FILE_TYPES, s3_download, s3_download_file
 from bson import json_util
 import json
-
+from fastapi.responses import JSONResponse
 counter = 1
 
 
@@ -92,9 +92,9 @@ async def getSalesData():
     salesData = Pymongodb.getData(collectionName)
 
     response = json.loads(json_util.dumps(salesData))
-    return {'output': response} \
- \
- \
+    return {'output': response}
+
+
 @app.get('/sales-data')
 async def getSalesData():
     # Get the database
@@ -117,22 +117,18 @@ class SalesRequest(BaseModel):
 
 @app.post('/sales-data')
 async def getSalesData(request: SalesRequest):
-    # Get the database
-    dbname = Pymongodb.get_database()
-    # Retrieve a collection named "sales_data" from database
-    collectionName = dbname["sales_data"]
-    salesData = Pymongodb.getData(collectionName)
-    SalesResponse = json.loads(json_util.dumps(salesData))
-    response = {"salesData": SalesResponse, "year": SalesRequest.year, "month": SalesRequest.month, "companyCode": SalesRequest.companyCode,
-                "sales": "Sales Value", "salesTarget": "targetSalesValue", "targetAchievement": "Target ach value", "salesLastYear": "Sales last yr value",
-                "accountReceivables": 'accountReceivables Value', "overdueReceivablesVal": "overdueReceivablesVal", "overdueReceivablesPct": "overdueReceivablesPct"}
+
     # datafile = 'com/bizware/data/ZSD_LOG_08-03-2024.csv'
     # response = Pymongodb.loadSalesData('saleswoman', datafile)
-    return {'output': response}
+    salesData = Pymongodb.getSaleDataByYearMonthCompanyCode(request)
+    response = json.loads(json_util.dumps(salesData))
+    print("Sales Data - ", response)
+    # return JSONResponse(response)
+    return response
 
 
 @app.get('/customer-ageing-data')
-async def getSalesData():
+async def getCustomerAgeingData():
     # Get the database
     dbname = Pymongodb.get_database()
     # Retrieve a collection named "ageing_data" from database
@@ -144,14 +140,13 @@ async def getSalesData():
 
 
 @app.get('/customer-ageing-overview-data')
-async def getSalesData():
+async def getCustomerAgeingOverviewData():
     # Get the database
     dbname = Pymongodb.get_database()
     # Retrieve a collection named "ageing_master_data" from database
     collectionName = dbname["ageing_master_data"]
     ageingData = Pymongodb.getData(collectionName)
     response = json.loads(json_util.dumps(ageingData))
-
     return {'output': response}
 
 
