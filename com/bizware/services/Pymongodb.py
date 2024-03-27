@@ -43,7 +43,7 @@ def createTableUniqueIndex(collectionName):
 def loadData(collection_name, datafile):
     data = pd.read_csv(datafile)
     datadict = data.to_dict(orient='records')
-    print('datadict -', datadict)
+    # print('datadict -', datadict)
     collection_name.insert_many(datadict)
 
 
@@ -60,27 +60,27 @@ def loadSalesData(collection_name, datafile):
     data = pd.read_csv(datafile, encoding='cp1252')
     salesColumns = data[
         ['CompCode', 'Invno.', 'InvDate', 'BillingTyp', 'Plant', 'PlantName', 'Division',
-         'DivDiscri', 'BillStatCd', 'BillStatNm', 'Bill2Distc', 'Ship2Party', 'ShpPrtyNm',
+         'DivDiscri', 'Bill2Party', 'Bil2PrtNme', 'BillStatCd', 'BillStatNm', 'Bill2Distc', 'Ship2Party', 'ShpPrtyNm',
          'ItemCode', 'ItemDes', 'HSNCode', 'BatchNo', 'UOM', 'BatchQnt', 'NetAmt',
          'TAmtAftTax', 'GrandTotal', 'DistrnChnl', 'SalesEmply', 'HQCode']]
 
     salesColumns['CompanyName'] = salesColumns['CompCode'].map(sales.companyDict)
     salesColumns[
-        ['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode', 'DistrnChnl']] = \
+        ['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode', 'DistrnChnl', 'Bill2Party']] = \
         salesColumns[['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode',
-                      'DistrnChnl']].fillna(0)
+                      'DistrnChnl', 'Bill2Party']].fillna(0)
     salesColumns = salesColumns.fillna('')
     salesColumns = salesColumns.to_dict(orient='records')
     salesDataList = []
     for sale in salesColumns:
         salesObj = sales.setSalesData(sale)
         salesDataList.append(salesObj)
-    print('Inserting salesDataList to MongoDB -', salesDataList)
+    # print('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.write(str(salesDataList))
     f.close()
     # collection_name.insert_many(salesDataList)
-    print('Inserted salesDataList Data to collection - {}'.format(collection_name))
+    # print('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
 
@@ -128,19 +128,36 @@ def getOverdueReceivables():
     return overdueReceivables
 
 
-def getTopProducts():
+def getTopCustomers(salesDf):
+    topCustomers = []
+    # topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToParty', 'billToPartName'])['grandTotal'].sum()
+    topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToPartName'])['grandTotal'].sum().sort_values(ascending=False).head(10).to_dict()
+    print("Get Grand Total sum of the grouped data by billToParty, billToPartName : ", topCustomersGroupByBillToPartyGrandTotalSum)
+    return topCustomersGroupByBillToPartyGrandTotalSum
+
+
+def getTopProducts(salesDf):
     topProducts = []
-    return topProducts
+    # topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemCode', 'itemDescription'])['grandTotal'].sum()
+    topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemDescription'])['grandTotal'].sum().sort_values(ascending=False).head(10).to_dict()
+    print("Get Grand Total sum of the grouped data by itemCode, itemDescription : ", topProductsGroupByItemDesGrandTotalSum)
+    return topProductsGroupByItemDesGrandTotalSum
 
 
-def getTopDivisions():
+def getTopDivisions(salesDf):
     topDivisions = []
-    return topDivisions
+    # topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['division', 'divisionDescription'])['grandTotal'].sum()
+    topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['divisionDescription'])['grandTotal'].sum().sort_values(ascending=False).head(10).to_dict()
+    print("Get Grand Total sum of the grouped data by division, divisionDescription : ", topDivisionsGroupByItemDesGrandTotalSum)
+    return topDivisionsGroupByItemDesGrandTotalSum
 
 
-def getTop5Performers():
-    top5Performers = []
-    return top5Performers
+def getTop5Performers(salesDf):
+    top5Performers = ["HAPUR ENTERPRISES", "MAN ENTERPRISES", "JAGDAMBA DRUG DISTRIBUTORS", "PUSHPAK PHARMA"]
+    # top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum()
+    top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum().sort_values(ascending=False).head(10).to_dict()
+    print("Get Grand Total sum of the grouped data by salesEmpolyee : ", top5PerformersGroupBySalesEmpolyeeGrandTotalSum)
+    return top5PerformersGroupBySalesEmpolyeeGrandTotalSum
 
 
 def getSaleDataByYearMonthCompanyCode(request):
@@ -155,6 +172,8 @@ def getSaleDataByYearMonthCompanyCode(request):
         # This does not give a very readable output
         itemList.append(item)
 
+    salesDf = pd.DataFrame(itemList)
+    salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
     salesDataDict = {"salesData": itemList,
                      "totalSales": getTotalSale(),
                      "salesTarget": getSalesTarget(),
@@ -162,9 +181,10 @@ def getSaleDataByYearMonthCompanyCode(request):
                      "salesLastYear": getSalesLastYear(),
                      "accountReceivables": getAccountReceivables(),
                      "overdueReceivables": getOverdueReceivables(),
-                     "topProducts": getTopProducts(),  # list
-                     "topDivisions": getTopDivisions(),  # list
-                     "top5Performers": getTop5Performers()  # list
+                     "topCustomers": getTopCustomers(salesDf),  # list
+                     "topProducts": getTopProducts(salesDf),  # list
+                     "topDivisions": getTopDivisions(salesDf),  # list
+                     "top5Performers": getTop5Performers(salesDf)  # list
                      }
     return salesDataDict
 
@@ -188,13 +208,14 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\ZSDLOGNNN.csv'
-    loadSalesData(sales_collection_name, saleDatafile)
-    # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
-    # SAP_22nd_Feb.csv')
 
-    ageingDataFile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\ZSDFICUSTAGENN.csv'
-    customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
+    # saleDatafile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\ZSDLOGNNN.csv'
+    # loadSalesData(sales_collection_name, saleDatafile)
+    # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
+    # # SAP_22nd_Feb.csv')
+    #
+    # ageingDataFile = r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\ZSDFICUSTAGENN.csv'
+    # customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
 
 
     # ageing_master_collection_name = dbname["ageing_master_data"]
@@ -217,3 +238,4 @@ if __name__ == "__main__":
     #     "expiry_date": expiry
     # }
     # collection_name.insert_one(item_3)
+    getSaleDataByYearMonthCompanyCode('request')

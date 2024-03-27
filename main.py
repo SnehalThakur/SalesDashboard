@@ -122,7 +122,7 @@ async def getSalesData(request: SalesRequest):
     # response = Pymongodb.loadSalesData('saleswoman', datafile)
     salesData = Pymongodb.getSaleDataByYearMonthCompanyCode(request)
     response = json.loads(json_util.dumps(salesData))
-    print("Sales Data - ", response)
+    # print("Sales Data - ", response)
     # return JSONResponse(response)
     return response
 

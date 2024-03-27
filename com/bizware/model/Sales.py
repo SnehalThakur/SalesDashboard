@@ -73,6 +73,8 @@ class Sales(BaseModel):
     divisionDescription: str = Field(..., alias='DivDiscri')
     plant: int = Field(..., alias='Plant')
     plantName: str = Field(..., alias='PlantName')
+    billToParty: int = Field(..., alias='Bill2Party')
+    billToPartName: str = Field(..., alias='Bil2PrtNme')
     billToStateCode: int = Field(..., alias='BillStatCd', nullable=True)
     billToStateName: str = Field(..., alias='BillStatNm', nullable=True)
     billingType: str = Field(..., alias='BillingTyp')
