@@ -151,7 +151,7 @@ async def getCustomerAgeingOverviewData():
 
 
 @app.get('/download')
-async def download(file_name: str | None = None):
+async def download(file_name: str):
     if not file_name:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
