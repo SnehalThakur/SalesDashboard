@@ -131,7 +131,7 @@ def getOverdueReceivables():
 def getTopCustomers(salesDf):
     topCustomers = []
     # topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToParty', 'billToPartName'])['grandTotal'].sum()
-    topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToPartName'])['grandTotal'].sum().sort_values(ascending=False).head(10).to_dict()
+    topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToPartName'])['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
     print("Get Grand Total sum of the grouped data by billToParty, billToPartName : ", topCustomersGroupByBillToPartyGrandTotalSum)
     return topCustomersGroupByBillToPartyGrandTotalSum
 
@@ -139,7 +139,7 @@ def getTopCustomers(salesDf):
 def getTopProducts(salesDf):
     topProducts = []
     # topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemCode', 'itemDescription'])['grandTotal'].sum()
-    topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemDescription'])['grandTotal'].sum().sort_values(ascending=False).head(10).to_dict()
+    topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemDescription'])['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
     print("Get Grand Total sum of the grouped data by itemCode, itemDescription : ", topProductsGroupByItemDesGrandTotalSum)
     return topProductsGroupByItemDesGrandTotalSum
 
@@ -147,7 +147,7 @@ def getTopProducts(salesDf):
 def getTopDivisions(salesDf):
     topDivisions = []
     # topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['division', 'divisionDescription'])['grandTotal'].sum()
-    topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['divisionDescription'])['grandTotal'].sum().sort_values(ascending=False).head(10).to_dict()
+    topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['divisionDescription'])['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
     print("Get Grand Total sum of the grouped data by division, divisionDescription : ", topDivisionsGroupByItemDesGrandTotalSum)
     return topDivisionsGroupByItemDesGrandTotalSum
 
@@ -155,7 +155,7 @@ def getTopDivisions(salesDf):
 def getTop5Performers(salesDf):
     top5Performers = ["HAPUR ENTERPRISES", "MAN ENTERPRISES", "JAGDAMBA DRUG DISTRIBUTORS", "PUSHPAK PHARMA"]
     # top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum()
-    top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum().sort_values(ascending=False).head(10).to_dict()
+    top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
     print("Get Grand Total sum of the grouped data by salesEmpolyee : ", top5PerformersGroupBySalesEmpolyeeGrandTotalSum)
     return top5PerformersGroupBySalesEmpolyeeGrandTotalSum
 
