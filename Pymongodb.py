@@ -141,9 +141,6 @@ def getCurrentMonthSales(salesDf):
 
 
 def getPreviousMonthSales(salesDf):
-    previous_month
-    previous_month_text
-
     previousMonthSales = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
                 salesDf["invoiceMonth"] == calendar.month_abbr[previous_month])].groupby(
         ['invoiceMonth', 'invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
@@ -158,11 +155,17 @@ def getPreviousMonthSales(salesDf):
 
 
 def getIndicatorCurrentMonthVsLastMonth(salesDf):
-    currentMonthSalesDict = getCurrentMonthSales(salesDf)[0]
-    currentMonthSales = currentMonthSalesDict.get('grandTotal')
+    currentMonthSales = 0
+    currentMonthSalesDict = {}
+    if len(getCurrentMonthSales(salesDf)) > 0:
+        currentMonthSalesDict = getCurrentMonthSales(salesDf)[0]
+        currentMonthSales = currentMonthSalesDict.get('grandTotal')
 
-    previousMonthSalesDict = getPreviousMonthSales(salesDf)[0]
-    previousMonthSales = previousMonthSalesDict.get('grandTotal')
+    previousMonthSales = 0
+    previousMonthSalesDict = {}
+    if len(getPreviousMonthSales(salesDf)) > 0:
+        previousMonthSalesDict = getPreviousMonthSales(salesDf)[0]
+        previousMonthSales = previousMonthSalesDict.get('grandTotal')
     rateChangeInPercent = round((currentMonthSales - previousMonthSales) * 100 / previousMonthSales, 3)
     # rateOfChangeInPercent = round((((previousMonthSales - currentMonthSales) / previousMonthSales) * 100), 3)
     indicator = {
