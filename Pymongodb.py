@@ -6,16 +6,59 @@ from pymongo import MongoClient
 # from com.bizware.config import settings
 import urllib.parse
 import pandas as pd
-import com.bizware.model.Sales as sales
-import com.bizware.model.CustomerAgeing as ageing
+import model.Sales as sales
+import model.CustomerAgeing as ageing
+# importing date class from datetime module
+from datetime import date, datetime, timedelta
+import calendar
+
+# creating the date object of today's date
+todays_date = date.today()
+todays_date = date(2023, 9, 1)
+current_year = todays_date.year
+current_month = todays_date.month
+# current_month_text = todays_date.strftime("%B") # March
+current_month_text = todays_date.strftime("%b")
+current_day = todays_date.day
+year_entire = todays_date.strftime("%Y")
+
+# # printing todays date
+# print("Current date: ", todays_date)
+#
+# # fetching the current year, month and day of today
+# print("Current year:", current_year)
+# print("Current month:", current_month)
+# print("Current month :", current_month_text)
+# print("Current day:", current_day)
+
+
+# get previous month
+def getPreviousMonth():
+    my_variable = todays_date
+    # my_variable = "2024-05-10"
+    d1 = datetime.strptime(str(my_variable), '%Y-%m-%d')
+    days = d1.day
+    # use timedelta to subtract n+1 days from current datetime object
+    d2 = d1 - timedelta(days=days + 1)
+    # get month of d2
+    # print(d2.month)
+    # get month name
+    # previous_month_text = calendar.month_name[d2.month]   # March
+    previousMonthText = calendar.month_abbr[d2.month]  # Mar
+    # print('Previous Month :', previousMonthText)
+    return d2.month, previousMonthText
+
+
+previous_month, previous_month_text = getPreviousMonth()
 
 # Provide the mongodb atlas url to connect python to mongodb using pymongo
-# MYSQL_DATABASE_URL = f"mysql://{settings.database_username}:{settings.database_password}@{settings.database_port}/{settings.database_name}"
-
 # CONNECTION_STRING = f"mongodb+srv://{settings.database_username}:{settings.database_password}@{settings.database_port}/{settings.database_name}"
 # CONNECTION_STRING = "mongodb+srv://bizware:<password>@bizwarecluster.rraehrb.mongodb.net/?retryWrites=true&w=majority&appName=BizwareCluster"
-password = urllib.parse.quote_plus('bizware@1234')
-CONNECTION_STRING = f"mongodb+srv://bizware:{password}@bizwarecluster.rraehrb.mongodb.net"
+# password = urllib.parse.quote_plus('bizware@1234')
+# CONNECTION_STRING = f"mongodb+srv://bizware:{password}@bizwarecluster.rraehrb.mongodb.net"
+
+# local db connection
+CONNECTION_STRING = f"mongodb://localhost:27017/"
 
 # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
 client = MongoClient(CONNECTION_STRING)
@@ -54,7 +97,6 @@ def loadData(collection_name, datafile):
 #     FreightPON,SalesEmply,HQCode,HospName
 
 
-
 # Load sales data
 def loadSalesData(collection_name, datafile):
     data = pd.read_csv(datafile, encoding='cp1252')
@@ -66,7 +108,8 @@ def loadSalesData(collection_name, datafile):
 
     salesColumns['CompanyName'] = salesColumns['CompCode'].map(sales.companyDict)
     salesColumns[
-        ['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode', 'DistrnChnl', 'Bill2Party']] = \
+        ['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode', 'DistrnChnl',
+         'Bill2Party']] = \
         salesColumns[['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode',
                       'DistrnChnl', 'Bill2Party']].fillna(0)
     salesColumns = salesColumns.fillna('')
@@ -77,11 +120,59 @@ def loadSalesData(collection_name, datafile):
         salesDataList.append(salesObj)
     # print('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
-    f.write(str(salesDataList))
     f.close()
     collection_name.insert_many(salesDataList)
     # print('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
+
+
+def getCurrentMonthSales(salesDf):
+    currentMonthSales = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
+                salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby(
+        ['invoiceMonth', 'invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
+    currentMonthSalesList = []
+    for key, val in currentMonthSales.items():
+        currentMonthSalesDict = {"invoiceMonth": key[0],
+                                 "invoiceYear": key[1],
+                                 "grandTotal": val
+                                 }
+        currentMonthSalesList.append(currentMonthSalesDict)
+    return currentMonthSalesList
+
+
+def getPreviousMonthSales(salesDf):
+    previous_month
+    previous_month_text
+
+    previousMonthSales = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
+                salesDf["invoiceMonth"] == calendar.month_abbr[previous_month])].groupby(
+        ['invoiceMonth', 'invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
+    previousMonthSalesList = []
+    for key, val in previousMonthSales.items():
+        previousMonthSalesDict = {"invoiceMonth": key[0],
+                                  "invoiceYear": key[1],
+                                  "grandTotal": val
+                                  }
+        previousMonthSalesList.append(previousMonthSalesDict)
+    return previousMonthSalesList
+
+
+def getIndicatorCurrentMonthVsLastMonth(salesDf):
+    currentMonthSalesDict = getCurrentMonthSales(salesDf)[0]
+    currentMonthSales = currentMonthSalesDict.get('grandTotal')
+
+    previousMonthSalesDict = getPreviousMonthSales(salesDf)[0]
+    previousMonthSales = previousMonthSalesDict.get('grandTotal')
+    rateChangeInPercent = round((currentMonthSales - previousMonthSales) * 100 / previousMonthSales, 3)
+    # rateOfChangeInPercent = round((((previousMonthSales - currentMonthSales) / previousMonthSales) * 100), 3)
+    indicator = {
+        "indicatorName": "Monthly Sale",
+        "period": f"{current_month_text} (this month) vs {previous_month_text} (last month)",
+        "currentMonthSales": currentMonthSalesDict,
+        "previousMonthSales": previousMonthSalesDict,
+        "rateChange": rateChangeInPercent
+    }
+    return indicator
 
 
 def getTotalSale():
@@ -131,32 +222,58 @@ def getOverdueReceivables():
 def getTopCustomers(salesDf):
     topCustomers = []
     # topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToParty', 'billToPartName'])['grandTotal'].sum()
-    topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToPartName'])['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
-    print("Get Grand Total sum of the grouped data by billToParty, billToPartName : ", topCustomersGroupByBillToPartyGrandTotalSum)
-    return topCustomersGroupByBillToPartyGrandTotalSum
+    # topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToPartName'])['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
+    topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToParty', 'billToPartName'])[
+        'grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
+    topCustomersList = []
+    for key, val in topCustomersGroupByBillToPartyGrandTotalSum.items():
+        topCustomersDict = {"customerCode": key[0],
+                            "customerName": key[1],
+                            "grandTotal": val
+                            }
+        topCustomersList.append(topCustomersDict)
+    print("Get Grand Total sum of the grouped data by billToParty, billToPartName : ", topCustomersList)
+    return topCustomersList
 
 
 def getTopProducts(salesDf):
     topProducts = []
     # topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemCode', 'itemDescription'])['grandTotal'].sum()
-    topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemDescription'])['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
-    print("Get Grand Total sum of the grouped data by itemCode, itemDescription : ", topProductsGroupByItemDesGrandTotalSum)
-    return topProductsGroupByItemDesGrandTotalSum
+    topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemCode', 'itemDescription'])[
+        'grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
+    topProductsList = []
+    for key, val in topProductsGroupByItemDesGrandTotalSum.items():
+        topProductsDict = {"divisionCode": key[0],
+                           "divisionName": key[1],
+                           "grandTotal": val
+                           }
+        topProductsList.append(topProductsDict)
+    print("Get Grand Total sum of the grouped data by itemCode, itemDescription : ", topProductsList)
+    return topProductsList
 
 
 def getTopDivisions(salesDf):
     topDivisions = []
     # topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['division', 'divisionDescription'])['grandTotal'].sum()
-    topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['divisionDescription'])['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
-    print("Get Grand Total sum of the grouped data by division, divisionDescription : ", topDivisionsGroupByItemDesGrandTotalSum)
-    return topDivisionsGroupByItemDesGrandTotalSum
+    topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['division', 'divisionDescription'])[
+        'grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
+    topDivisionsList = []
+    for key, val in topDivisionsGroupByItemDesGrandTotalSum.items():
+        topDivisionDict = {"divisionCode": key[0],
+                           "divisionName": key[1],
+                           "grandTotal": val
+                           }
+        topDivisionsList.append(topDivisionDict)
+    print("Get Grand Total sum of the grouped data by division, divisionDescription : ", topDivisionsList)
+    return topDivisionsList
 
 
 def getTop5Performers(salesDf):
-    top5Performers = ["HAPUR ENTERPRISES", "MAN ENTERPRISES", "JAGDAMBA DRUG DISTRIBUTORS", "PUSHPAK PHARMA"]
     # top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum()
-    top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
-    print("Get Grand Total sum of the grouped data by salesEmpolyee : ", top5PerformersGroupBySalesEmpolyeeGrandTotalSum)
+    top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum().sort_values(
+        ascending=False).head(5).to_dict()
+    print("Get Grand Total sum of the grouped data by salesEmpolyee : ",
+          top5PerformersGroupBySalesEmpolyeeGrandTotalSum)
     return top5PerformersGroupBySalesEmpolyeeGrandTotalSum
 
 
@@ -174,6 +291,10 @@ def getSaleDataByYearMonthCompanyCode(request):
 
     salesDf = pd.DataFrame(itemList)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
+    salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
+    salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[0].apply(
+        lambda x: calendar.month_abbr[int(x)])
+    salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
     salesDataDict = {"salesData": itemList,
                      "totalSales": getTotalSale(),
                      "salesTarget": getSalesTarget(),
@@ -184,7 +305,8 @@ def getSaleDataByYearMonthCompanyCode(request):
                      "topCustomers": getTopCustomers(salesDf),  # list
                      "topProducts": getTopProducts(salesDf),  # list
                      "topDivisions": getTopDivisions(salesDf),  # list
-                     "top5Performers": getTop5Performers(salesDf)  # list
+                     "top5Performers": getTop5Performers(salesDf),  # list
+                     "indicator": getIndicatorCurrentMonthVsLastMonth(salesDf)  # list
                      }
     return salesDataDict
 
@@ -208,23 +330,19 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-
-    saleDatafile = 'com/bizware/data/ZSDLOGNNN.csv'
+    saleDatafile = 'ZSDLOGNNN.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
-    ageingDataFile = 'com/bizware/data/ZSDLOGNNN.csv'
+    ageingDataFile = 'ZSDFICUSTAGENN.csv'
     customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
-
 
     ageing_master_collection_name = dbname["ageing_master_data"]
     ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
     #
     ageing_collection_name = dbname["ageing_data"]
     ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
-
-
 
     # item_details = ageing_collection_name.find()
     # for item in item_details:

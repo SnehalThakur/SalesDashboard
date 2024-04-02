@@ -1,22 +1,19 @@
 """
 Copyright (c) 2024 - Bizware International
 """
-import logging
-from datetime import datetime, timedelta
-from uuid import uuid4
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from typing import Union
-from pydantic import BaseModel, Field, parse_obj_as
-from apscheduler.schedulers.background import BackgroundScheduler
-from contextlib import asynccontextmanager
+from pydantic import BaseModel
 import uvicorn
-from fastapi import FastAPI, HTTPException, Response, UploadFile, status
-from com.bizware.services import Pymongodb
-from com.bizware.utils.AWSS3Util import s3_upload, SUPPORTED_FILE_TYPES, s3_download, s3_download_file
+from fastapi import FastAPI, HTTPException, Response, status
+import Pymongodb
+from utils.AWSS3Util import s3_download, s3_download_file
 from bson import json_util
 import json
-from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+
+
+
 counter = 1
 
 
@@ -44,6 +41,21 @@ def getS3File():
 # app = FastAPI(lifespan=lifespan)
 app = FastAPI()
 
+
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+    "http://localhost:4200",
+    "https://localhost:4200",
+    "http://103.151.107.153:4200",
+    "https://103.151.107.153:4200/"
+]
+
+app.add_middleware(CORSMiddleware,
+                   allow_origin=origins,
+                   allow_credentials=True,
+                   allow_methods=["*"],
+                   allow_headers=["*"])
 
 @app.get("/")
 def read_root():

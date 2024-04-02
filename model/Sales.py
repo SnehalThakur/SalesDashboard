@@ -4,14 +4,11 @@ Copyright (c) 2024 - Bizware International
 from typing import Optional, Union, Dict, List
 
 from bson import json_util
-from pymongo import MongoClient
-from pydantic.dataclasses import dataclass
 # from pydantic.tools import parse_obj_as
-from pydantic import BaseModel, Field, parse_obj_as
 import json
 from pydantic import BaseModel, Field
 
-from com.bizware.services import Pymongodb
+import Pymongodb
 
 companyDict = {
     1000: "AISHWARYA HEALTHCARE",
