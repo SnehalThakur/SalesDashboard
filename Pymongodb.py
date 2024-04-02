@@ -14,7 +14,7 @@ import calendar
 
 # creating the date object of today's date
 todays_date = date.today()
-todays_date = date(2023, 9, 1)
+# todays_date = date(2023, 9, 1)
 current_year = todays_date.year
 current_month = todays_date.month
 # current_month_text = todays_date.strftime("%B") # March
