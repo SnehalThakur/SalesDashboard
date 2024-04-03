@@ -12,6 +12,8 @@ import model.CustomerAgeing as ageing
 from datetime import date, datetime, timedelta
 import calendar
 
+from bson import json_util
+import json
 # creating the date object of today's date
 todays_date = date.today()
 # todays_date = date(2023, 9, 1)
@@ -168,6 +170,7 @@ def getIndicatorCurrentMonthVsLastMonth(salesDf):
         previousMonthSales = previousMonthSalesDict.get('grandTotal')
     rateChangeInPercent = round((currentMonthSales - previousMonthSales) * 100 / previousMonthSales, 3)
     # rateOfChangeInPercent = round((((previousMonthSales - currentMonthSales) / previousMonthSales) * 100), 3)
+    indicatorList = []
     indicator = {
         "indicatorName": "Monthly Sale",
         "period": f"{current_month_text} (this month) vs {previous_month_text} (last month)",
@@ -175,7 +178,8 @@ def getIndicatorCurrentMonthVsLastMonth(salesDf):
         "previousMonthSales": previousMonthSalesDict,
         "rateChange": rateChangeInPercent
     }
-    return indicator
+    indicatorList.append(indicator)
+    return indicatorList
 
 
 def getTotalSale():
@@ -298,7 +302,7 @@ def getSaleDataByYearMonthCompanyCode(request):
     salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[0].apply(
         lambda x: calendar.month_abbr[int(x)])
     salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
-    salesDataDict = {"salesData": itemList,
+    salesDataDict = {"salesData": json.loads(json_util.dumps(itemList)),
                      "totalSales": getTotalSale(),
                      "salesTarget": getSalesTarget(),
                      "targetAchievement": getTargetAchievement(),
