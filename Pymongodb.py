@@ -337,12 +337,12 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'ZSDLOGNNN.csv'
+    saleDatafile = 'ZSDLOGNNN_Prod.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
-    ageingDataFile = 'ZSDFICUSTAGENN.csv'
+    ageingDataFile = 'Custageingallcompanycode.csv'
     customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
 
     ageing_master_collection_name = dbname["ageing_master_data"]
