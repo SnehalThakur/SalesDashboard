@@ -6,7 +6,7 @@ from typing import Optional, Union, Dict, List
 from bson import json_util
 # from pydantic.tools import parse_obj_as
 import json
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 import Pymongodb
 
@@ -62,6 +62,8 @@ plantDict = {
 
 
 class Sales(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     invoiceNumber: int = Field(..., alias='Invno.')
     invoiceDate: str = Field(..., alias='InvDate')
     companyCode: int = Field(..., alias='CompCode')
@@ -72,7 +74,7 @@ class Sales(BaseModel):
     plantName: str = Field(..., alias='PlantName')
     billToParty: int = Field(..., alias='Bill2Party')
     billToPartName: str = Field(..., alias='Bil2PrtNme')
-    billToStateCode: int = Field(..., alias='BillStatCd', nullable=True)
+    billToStateCode: str = Field(..., alias='BillStatCd', nullable=True)
     billToStateName: str = Field(..., alias='BillStatNm', nullable=True)
     billingType: str = Field(..., alias='BillingTyp')
     # shipToDistrict: str = Field(..., alias='Shp2Dist')
@@ -91,6 +93,7 @@ class Sales(BaseModel):
     distributionChannel: int = Field(..., alias='DistrnChnl')
     salesEmpolyee: str = Field(..., alias='SalesEmply')
     hqCode: str = Field(..., alias='HQCode')
+
 
 
 # Month	Year	ZONE	Employee Code	Employee Name	Employee Designation	HOD Emp code	HOD Name	Country	Region/State	HQ	HQ Code	City	Division	Monthly sales Target

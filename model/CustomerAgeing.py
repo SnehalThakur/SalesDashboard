@@ -7,7 +7,7 @@ Customer Code	Customer Name	Customer Group	Profit Center	Billing Document	Billin
 Document No.	Document Type	Balanace Due	Due Date	Due Days	Not Due	Doubtful Debt	Legal	Sales Group	Sales Organization	Division
 Above 180 Days	000to30Days	31to60Days	61to90Days	91to120Days	121to150Days	151to180Days	Written Off
 '''
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 import pandas as pd
 
 companyDict = {
@@ -18,10 +18,12 @@ companyDict = {
 
 
 class CustomerAgeing(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     customerCode: int = Field(..., alias='CustCode.')
     customerName: str = Field(..., alias='CustName')
     customerGroup: str = Field(..., alias='CustGrp')
-    profitCenter: int = Field(..., alias='PrfitCentr')
+    profitCenter: str = Field(..., alias='PrfitCentr')
     billingDocument: int = Field(..., alias='DocumeNo.')
     billingType: str = Field(..., alias='BillinType')
     invoiceDate: str = Field(..., alias='InvDate')
@@ -32,7 +34,7 @@ class CustomerAgeing(BaseModel):
     balanceDue: str = Field(..., alias='BalanaDue')
     dueDate: str = Field(..., alias='DueDate.')
     dueDays: str = Field(..., alias='DueDays.')
-    notDue: str = Field(..., alias='NotDue')
+    notDue: int = Field(..., alias='NotDue')
     doubtfulDebt: str = Field(..., alias='DoutfulDeb')
     legal: str = Field(..., alias='Legal')
     salesGroup: str = Field(..., alias='SalesGroup')
