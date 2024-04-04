@@ -123,7 +123,7 @@ def loadSalesData(collection_name, datafile):
     # print('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    collection_name.insert_many(salesDataList)
+    # collection_name.insert_many(salesDataList)
     # print('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -298,9 +298,11 @@ def getSaleDataByYearMonthCompanyCode(request):
 
     salesDf = pd.DataFrame(itemList)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
-    salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
-    salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[0].apply(
-        lambda x: calendar.month_abbr[int(x)])
+    # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
+    salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
+        # lambda x: print(int(x))
+        lambda x: calendar.month_abbr[int(x)]
+        })
     salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
     salesDataDict = {"salesData": json.loads(json_util.dumps(itemList)),
                      "totalSales": getTotalSale(),
@@ -346,10 +348,10 @@ if __name__ == "__main__":
     customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
 
     ageing_master_collection_name = dbname["ageing_master_data"]
-    ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
+    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
     #
     ageing_collection_name = dbname["ageing_data"]
-    ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
+    # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
 
     # item_details = ageing_collection_name.find()
     # for item in item_details:
