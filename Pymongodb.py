@@ -123,7 +123,7 @@ def loadSalesData(collection_name, datafile):
     # print('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    collection_name.insert_many(salesDataList)
+    # collection_name.insert_many(salesDataList)
     # print('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
