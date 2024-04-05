@@ -1,7 +1,6 @@
 """
 Copyright (c) 2024 - Bizware International
 """
-
 from pymongo import MongoClient
 # from com.bizware.config import settings
 import urllib.parse
@@ -11,9 +10,10 @@ import model.CustomerAgeing as ageing
 # importing date class from datetime module
 from datetime import date, datetime, timedelta
 import calendar
-
+import motor
 from bson import json_util
 import json
+
 # creating the date object of today's date
 todays_date = date.today()
 # todays_date = date(2023, 9, 1)
@@ -23,6 +23,7 @@ current_month = todays_date.month
 current_month_text = todays_date.strftime("%b")
 current_day = todays_date.day
 year_entire = todays_date.strftime("%Y")
+
 
 # # printing todays date
 # print("Current date: ", todays_date)
@@ -64,6 +65,7 @@ CONNECTION_STRING = f"mongodb://localhost:27017/"
 
 # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
 client = MongoClient(CONNECTION_STRING)
+# client = motor.AsyncIOMotorClient(CONNECTION_STRING)
 
 
 def get_session():
@@ -130,7 +132,7 @@ def loadSalesData(collection_name, datafile):
 
 def getCurrentMonthSales(salesDf):
     currentMonthSales = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
-                salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby(
+            salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby(
         ['invoiceMonth', 'invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
     currentMonthSalesList = []
     for key, val in currentMonthSales.items():
@@ -144,7 +146,7 @@ def getCurrentMonthSales(salesDf):
 
 def getPreviousMonthSales(salesDf):
     previousMonthSales = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
-                salesDf["invoiceMonth"] == calendar.month_abbr[previous_month])].groupby(
+            salesDf["invoiceMonth"] == calendar.month_abbr[previous_month])].groupby(
         ['invoiceMonth', 'invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
     previousMonthSalesList = []
     for key, val in previousMonthSales.items():
@@ -285,13 +287,74 @@ def getTop5Performers(salesDf):
 
 
 def getSaleDataByYearMonthCompanyCode(request):
-    itemList = []
     # get database obj
     dbname = get_database()
 
     # Retrieve a collection named "sales_data" from database
     collection_name = dbname["sales_data"]
     itemDetails = collection_name.find()
+    # st_date = date(2023, 1, 1)
+    # end_date = date(2024, 1, 1)
+    # itemDetails = collection_name.find({
+    #     'invoiceDate': {
+    #         '$and': [
+    #             {'$gte': ['$st_date', st_date],
+    #              },
+    #             {
+    #                 '$lte': ['$end_date', end_date],
+    #             }
+    #         ]
+    #     }
+    # })
+    # salesDf = pd.json_normalize(itemDetails)
+    # for item in itemDetails:
+    #     # This does not give a very readable output
+    #     itemList.append(item)
+    itemList = list(itemDetails)
+    salesDf = pd.DataFrame(itemList)
+    salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
+    # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
+    salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
+        lambda x: calendar.month_abbr[int(x)]
+    })
+    salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
+    salesDataDict = {"salesData": json.loads(json_util.dumps(itemList)),
+                     "totalSales": getTotalSale(),
+                     "salesTarget": getSalesTarget(),
+                     "targetAchievement": getTargetAchievement(),
+                     "salesLastYear": getSalesLastYear(),
+                     "accountReceivables": getAccountReceivables(),
+                     "overdueReceivables": getOverdueReceivables(),
+                     "topCustomers": getTopCustomers(salesDf),  # list
+                     "topProducts": getTopProducts(salesDf),  # list
+                     "topDivisions": getTopDivisions(salesDf),  # list
+                     "top5Performers": getTop5Performers(salesDf),  # list
+                     "indicator": getIndicatorCurrentMonthVsLastMonth(salesDf)  # list
+                     }
+    return salesDataDict
+
+
+def getSalesStats(request):
+    itemList = []
+    # get database obj
+    dbname = get_database()
+
+    # Retrieve a collection named "sales_data" from database
+    collection_name = dbname["sales_data"]
+    st_date = (2023, 1, 1)
+    end_date = (2024, 1, 1)
+    # itemDetails = collection_name.find({'createdAt':{'$gte':date("2021-01-01"),'$lt':date("2020-05-01"}})
+    itemDetails = collection_name.find({
+        'review_date': {
+            '$and': [
+                {'$gte': ['$st_date', date(st_date)],
+                 },
+                {
+                    '$lte': ['$end_date', date(end_date)],
+                }
+            ]
+        }
+    })
     for item in itemDetails:
         # This does not give a very readable output
         itemList.append(item)
@@ -302,7 +365,7 @@ def getSaleDataByYearMonthCompanyCode(request):
     salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
         # lambda x: print(int(x))
         lambda x: calendar.month_abbr[int(x)]
-        })
+    })
     salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
     salesDataDict = {"salesData": json.loads(json_util.dumps(itemList)),
                      "totalSales": getTotalSale(),
@@ -323,9 +386,10 @@ def getSaleDataByYearMonthCompanyCode(request):
 def getData(collectionName):
     itemList = []
     itemDetails = collectionName.find()
-    for item in itemDetails:
-        # This does not give a very readable output
-        itemList.append(item)
+    # for item in itemDetails:
+    #     # This does not give a very readable output
+    #     itemList.append(item)
+    itemList = list(itemDetails)
     return itemList
 
 
@@ -348,10 +412,10 @@ if __name__ == "__main__":
     customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
 
     ageing_master_collection_name = dbname["ageing_master_data"]
-    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
+    ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
     #
     ageing_collection_name = dbname["ageing_data"]
-    # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
+    ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
 
     # item_details = ageing_collection_name.find()
     # for item in item_details:
