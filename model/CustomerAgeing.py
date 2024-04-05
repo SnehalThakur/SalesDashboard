@@ -128,19 +128,19 @@ class CustomerAgeingReport(BaseModel):
 def setCustomerAgeingData(ageingData):
     ageing = CustomerAgeing(**ageingData)
     ageingJsonData = ageing.dict()
-    print('ageingJsonData -', ageingJsonData)
+    # print('ageingJsonData -', ageingJsonData)
     return ageingJsonData
 
 
 def setCustomerAgeingReportData(ageingData):
     ageing = CustomerAgeingReport(**ageingData)
     ageingJsonData = ageing.dict()
-    print('ageing Json Report Data -', ageingJsonData)
+    # print('ageing Json Report Data -', ageingJsonData)
     return ageingJsonData
 
 
 def customerAgeingDataLoader(collection_name, ageingData):
-    print('Inserting ageing Data to collection {}'.format(collection_name))
+    # print('Inserting ageing Data to collection {}'.format(collection_name))
     collection_name.insert_many(ageingData)
     print('Inserted ageing Data to collection {}'.format(collection_name))
 
@@ -163,8 +163,8 @@ def customerAgeingFileReaderAndLoader(filename):
     for ageing in ageingColumns:
         ageingObj = setCustomerAgeingReportData(ageing)
         customerAgeingReportDataList.append(ageingObj)
-    print('CustomerAgeingList for MongoDB -', customerAgeingList)
-    print('CustomerAgeingReportDataList for MongoDB -', customerAgeingReportDataList)
+    # print('CustomerAgeingList for MongoDB -', customerAgeingList)
+    # print('CustomerAgeingReportDataList for MongoDB -', customerAgeingReportDataList)
     f = open("CustomerAgeingList.txt", "w")
     f.write(str(customerAgeingList))
     f.close()
@@ -172,5 +172,5 @@ def customerAgeingFileReaderAndLoader(filename):
     f.write(str(customerAgeingReportDataList))
     f.close()
     # collection_name.insert_many(salesDataList)
-    # print('Inserting customerAgeingReportDataList Done')
+    print('Inserting customerAgeingReportDataList Done')
     return customerAgeingList, customerAgeingReportDataList
