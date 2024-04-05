@@ -7,7 +7,7 @@ from bson import json_util
 # from pydantic.tools import parse_obj_as
 import json
 from pydantic import BaseModel, Field, ConfigDict
-
+from datetime import datetime
 import Pymongodb
 
 companyDict = {
@@ -65,7 +65,7 @@ class Sales(BaseModel):
     model_config = ConfigDict(coerce_numbers_to_str=True)
 
     invoiceNumber: int = Field(..., alias='Invno.')
-    invoiceDate: str = Field(..., alias='InvDate')
+    invoiceDate: str  = Field(..., alias='InvDate')
     companyCode: int = Field(..., alias='CompCode')
     companyName: str = Field(..., alias='CompanyName')
     division: int = Field(..., alias='Division')
