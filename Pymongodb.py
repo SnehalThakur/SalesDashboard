@@ -307,10 +307,11 @@ def getSaleDataByYearMonthCompanyCode(request):
     #     }
     # })
     # salesDf = pd.json_normalize(itemDetails)
-    # for item in itemDetails:
-    #     # This does not give a very readable output
-    #     itemList.append(item)
-    itemList = list(itemDetails)
+    itemList = []
+    for item in itemDetails:
+        # This does not give a very readable output
+        itemList.append(item)
+    # itemList = list(itemDetails)
     salesDf = pd.DataFrame(itemList)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
     # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
@@ -386,10 +387,10 @@ def getSalesStats(request):
 def getData(collectionName):
     itemList = []
     itemDetails = collectionName.find()
-    # for item in itemDetails:
-    #     # This does not give a very readable output
-    #     itemList.append(item)
-    itemList = list(itemDetails)
+    for item in itemDetails:
+        # This does not give a very readable output
+        itemList.append(item)
+    # itemList = list(itemDetails)
     return itemList
 
 
