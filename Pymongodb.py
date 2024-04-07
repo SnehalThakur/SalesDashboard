@@ -243,7 +243,7 @@ def getIndicatorCurrentMonthYearVsLastMonthYear(salesDf):
         "currentMonthSales": currentMonthSalesDict,
         "previousMonthSales": previousMonthSalesDict,
         "rateChange": rateChangeInPercent,
-        "currentYearSales": currentMonthSalesDict,
+        "currentYearSales": currentYearSalesDict,
         "previousYearSales": previousYearSalesDict,
         "rateChangeYear": rateChangeInPercentYearly,
         "currentMonthPreviousYearSales": currentMonthPreviousYearSales,
