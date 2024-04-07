@@ -10,7 +10,7 @@ import model.CustomerAgeing as ageing
 # importing date class from datetime module
 from datetime import date, datetime, timedelta
 import calendar
-import motor
+# import motor
 from bson import json_util
 import json
 
@@ -65,6 +65,8 @@ CONNECTION_STRING = f"mongodb://localhost:27017/"
 
 # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
 client = MongoClient(CONNECTION_STRING)
+
+
 # client = motor.AsyncIOMotorClient(CONNECTION_STRING)
 
 
@@ -158,7 +160,46 @@ def getPreviousMonthSales(salesDf):
     return previousMonthSalesList
 
 
-def getIndicatorCurrentMonthVsLastMonth(salesDf):
+def getCurrentYearSales(salesDf):
+    currentMonthSales = salesDf[salesDf["invoiceYear"].astype(int) == current_year].groupby(
+        ['invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
+    currentYearSalesList = []
+    for key, val in currentMonthSales.items():
+        currentYearSalesDict = {"invoiceYear": key[0],
+                                "grandTotal": val
+                                }
+        currentYearSalesList.append(currentYearSalesDict)
+    return currentYearSalesList
+
+
+def getPreviousYearSales(salesDf):
+    previousYear = current_year - 1
+    previousYearSales = salesDf[salesDf["invoiceYear"].astype(int) == previousYear].groupby(
+        ['invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
+    previousYearSalesList = []
+    for key, val in previousYearSales.items():
+        previousYearSalesDict = {"invoiceYear": key[0],
+                                 "grandTotal": val
+                                 }
+        previousYearSalesList.append(previousYearSalesDict)
+    return previousYearSalesList
+
+
+def getCurrentMonthPreviousYearSales(salesDf):
+    currentMonthPreviousYearSales = salesDf[(salesDf["invoiceYear"].astype(int) == current_year - 1) & (
+            salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby(
+        ['invoiceMonth', 'invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
+    currentMonthPreviousYearSalesList = []
+    for key, val in currentMonthPreviousYearSales.items():
+        currentMonthPreviousYearSalesDict = {"invoiceMonth": key[0],
+                                             "invoiceYear": key[1],
+                                             "grandTotal": val
+                                             }
+        currentMonthPreviousYearSalesList.append(currentMonthPreviousYearSalesDict)
+    return currentMonthPreviousYearSalesList
+
+
+def getIndicatorCurrentMonthYearVsLastMonthYear(salesDf):
     currentMonthSales = 0
     currentMonthSalesDict = {}
     if len(getCurrentMonthSales(salesDf)) > 0:
@@ -170,7 +211,30 @@ def getIndicatorCurrentMonthVsLastMonth(salesDf):
     if len(getPreviousMonthSales(salesDf)) > 0:
         previousMonthSalesDict = getPreviousMonthSales(salesDf)[0]
         previousMonthSales = previousMonthSalesDict.get('grandTotal')
+
     rateChangeInPercent = round((currentMonthSales - previousMonthSales) * 100 / previousMonthSales, 3)
+
+    currentYearSales = 0
+    currentYearSalesDict = {}
+    if len(getCurrentYearSales(salesDf)) > 0:
+        currentYearSalesDict = getCurrentYearSales(salesDf)[0]
+        currentYearSales = currentYearSalesDict.get('grandTotal')
+
+    previousYearSales = 0
+    previousYearSalesDict = {}
+    if len(getPreviousYearSales(salesDf)) > 0:
+        previousYearSalesDict = getPreviousYearSales(salesDf)[0]
+        previousYearSales = previousYearSalesDict.get('grandTotal')
+
+    rateChangeInPercentYearly = round((currentYearSales - previousYearSales) * 100 / previousYearSales, 3)
+
+    currentMonthPreviousYearSales = 0
+    currentMonthPreviousYearSalesDict = {}
+    if len(getCurrentMonthPreviousYearSales(salesDf)) > 0:
+        currentMonthPreviousYearSalesDict = getCurrentMonthPreviousYearSales(salesDf)[0]
+        currentMonthPreviousYearSales = currentMonthPreviousYearSalesDict.get('grandTotal')
+
+    rateChangeInPercentCurrentMonthLastYear = round((currentMonthSales - currentMonthPreviousYearSales) * 100 / currentMonthPreviousYearSales, 3)
     # rateOfChangeInPercent = round((((previousMonthSales - currentMonthSales) / previousMonthSales) * 100), 3)
     indicatorList = []
     indicator = {
@@ -178,17 +242,22 @@ def getIndicatorCurrentMonthVsLastMonth(salesDf):
         "period": f"{current_month_text} (this month) vs {previous_month_text} (last month)",
         "currentMonthSales": currentMonthSalesDict,
         "previousMonthSales": previousMonthSalesDict,
-        "rateChange": rateChangeInPercent
+        "rateChange": rateChangeInPercent,
+        "currentYearSales": currentMonthSalesDict,
+        "previousYearSales": previousYearSalesDict,
+        "rateChangeYear": rateChangeInPercentYearly,
+        "currentMonthPreviousYearSales": currentMonthPreviousYearSales,
+        "rateChangeInPercentCurrentMonthLastYear": rateChangeInPercentCurrentMonthLastYear
     }
     indicatorList.append(indicator)
     return indicatorList
 
 
-def getTotalSale():
-    totalSales = {"MoM": "50.99",
-                  "MoMPct": "43",
-                  "YoY": "99.96",
-                  "YoYPct": "43"}
+def getTotalSale(currentMonthYearVsLastMonthYear):
+    totalSales = {"MoM": currentMonthYearVsLastMonthYear["currentMonthSales"]['grandTotal'],
+                  "MoMPct": currentMonthYearVsLastMonthYear["rateChange"],
+                  "YoY": currentMonthYearVsLastMonthYear["currentYearSales"]['grandTotal'],
+                  "YoYPct": currentMonthYearVsLastMonthYear["rateChangeYear"]}
     return totalSales
 
 
@@ -208,11 +277,11 @@ def getTargetAchievement():
     return targetAchievement
 
 
-def getSalesLastYear():
-    salesLastYear = {"MoM": "50.99",
-                     "MoMPct": "43",
-                     "YoY": "99.96",
-                     "YoYPct": "43"}
+def getSalesLastYear(currentMonthYearVsLastMonthYear):
+    salesLastYear = {"MoM": currentMonthYearVsLastMonthYear["currentMonthPreviousYearSales"],
+                     "MoMPct": currentMonthYearVsLastMonthYear["rateChangeInPercentCurrentMonthLastYear"],
+                     "YoY": currentMonthYearVsLastMonthYear["previousYearSales"]['grandTotal'],
+                     "YoYPct": currentMonthYearVsLastMonthYear["rateChangeYear"]}
     return salesLastYear
 
 
@@ -319,67 +388,19 @@ def getSaleDataByYearMonthCompanyCode(request):
         lambda x: calendar.month_abbr[int(x)]
     })
     salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
+    currentMonthYearVsLastMonthYearStats = getIndicatorCurrentMonthYearVsLastMonthYear(salesDf)
     salesDataDict = {"salesData": json.loads(json_util.dumps(itemList)),
-                     "totalSales": getTotalSale(),
+                     "totalSales": getTotalSale(currentMonthYearVsLastMonthYearStats[0]),
                      "salesTarget": getSalesTarget(),
                      "targetAchievement": getTargetAchievement(),
-                     "salesLastYear": getSalesLastYear(),
+                     "salesLastYear": getSalesLastYear(currentMonthYearVsLastMonthYearStats[0]),
                      "accountReceivables": getAccountReceivables(),
                      "overdueReceivables": getOverdueReceivables(),
                      "topCustomers": getTopCustomers(salesDf),  # list
                      "topProducts": getTopProducts(salesDf),  # list
                      "topDivisions": getTopDivisions(salesDf),  # list
                      "top5Performers": getTop5Performers(salesDf),  # list
-                     "indicator": getIndicatorCurrentMonthVsLastMonth(salesDf)  # list
-                     }
-    return salesDataDict
-
-
-def getSalesStats(request):
-    itemList = []
-    # get database obj
-    dbname = get_database()
-
-    # Retrieve a collection named "sales_data" from database
-    collection_name = dbname["sales_data"]
-    st_date = (2023, 1, 1)
-    end_date = (2024, 1, 1)
-    # itemDetails = collection_name.find({'createdAt':{'$gte':date("2021-01-01"),'$lt':date("2020-05-01"}})
-    itemDetails = collection_name.find({
-        'review_date': {
-            '$and': [
-                {'$gte': ['$st_date', date(st_date)],
-                 },
-                {
-                    '$lte': ['$end_date', date(end_date)],
-                }
-            ]
-        }
-    })
-    for item in itemDetails:
-        # This does not give a very readable output
-        itemList.append(item)
-
-    salesDf = pd.DataFrame(itemList)
-    salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
-    # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
-    salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
-        # lambda x: print(int(x))
-        lambda x: calendar.month_abbr[int(x)]
-    })
-    salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
-    salesDataDict = {"salesData": json.loads(json_util.dumps(itemList)),
-                     "totalSales": getTotalSale(),
-                     "salesTarget": getSalesTarget(),
-                     "targetAchievement": getTargetAchievement(),
-                     "salesLastYear": getSalesLastYear(),
-                     "accountReceivables": getAccountReceivables(),
-                     "overdueReceivables": getOverdueReceivables(),
-                     "topCustomers": getTopCustomers(salesDf),  # list
-                     "topProducts": getTopProducts(salesDf),  # list
-                     "topDivisions": getTopDivisions(salesDf),  # list
-                     "top5Performers": getTop5Performers(salesDf),  # list
-                     "indicator": getIndicatorCurrentMonthVsLastMonth(salesDf)  # list
+                     "indicator": currentMonthYearVsLastMonthYearStats  # list
                      }
     return salesDataDict
 
@@ -404,7 +425,7 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'ZSDLOGNNN_Prod.csv'
+    saleDatafile = 'zsdlogNew.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
@@ -413,10 +434,10 @@ if __name__ == "__main__":
     customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
 
     ageing_master_collection_name = dbname["ageing_master_data"]
-    ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
+    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
     #
     ageing_collection_name = dbname["ageing_data"]
-    ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
+    # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
 
     # item_details = ageing_collection_name.find()
     # for item in item_details:
