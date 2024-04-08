@@ -127,7 +127,7 @@ def loadSalesData(collection_name, datafile):
     # print('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    # collection_name.insert_many(salesDataList)
+    collection_name.insert_many(salesDataList)
     # print('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -294,8 +294,8 @@ def getAccountReceivables(ageingDf):
 
 
 def getOverdueReceivables():
-    overdueReceivables = {"overdueReceivablesVal": "",
-                          "overdueReceivablesPct": ""}
+    overdueReceivables = {"overdueReceivablesVal": "90.99",
+                          "overdueReceivablesPct": "43"}
     return overdueReceivables
 
 
@@ -356,11 +356,6 @@ def getTop5Performers(salesDf):
           top5PerformersGroupBySalesEmpolyeeGrandTotalSum)
     return top5PerformersGroupBySalesEmpolyeeGrandTotalSum
 
-def getAgeingStats(ageingDf):
-    balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
-    return balanceDue
-
-
 
 def getSaleDataByYearMonthCompanyCode(request):
     # get database obj
@@ -397,14 +392,12 @@ def getSaleDataByYearMonthCompanyCode(request):
     salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
     currentMonthYearVsLastMonthYearStats = getIndicatorCurrentMonthYearVsLastMonthYear(salesDf)
 
-
     # Ageing data
     ageingCollectionName = dbname["ageing_data"]
     ageingItemDetails = ageingCollectionName.find()
     ageingItemList = list(ageingItemDetails)
     ageingDf = pd.DataFrame(ageingItemList)
-    balanceDue = getAgeingStats(ageingDf)
-
+    # balanceDue = getAgeingStats(ageingDf)
 
     salesDataDict = {"salesData": json.loads(json_util.dumps(itemList)),
                      "totalSales": getTotalSale(currentMonthYearVsLastMonthYearStats[0]),
