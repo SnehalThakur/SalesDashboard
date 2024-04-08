@@ -285,15 +285,17 @@ def getSalesLastYear(currentMonthYearVsLastMonthYear):
     return salesLastYear
 
 
-def getAccountReceivables():
-    accountReceivables = {"accountReceivablesVal": "90.99",
-                          "accountReceivablesPct": "43"}
+def getAccountReceivables(ageingDf):
+    balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
+
+    accountReceivables = {"accountReceivablesVal": balanceDue,
+                          "accountReceivablesPct": ""}
     return accountReceivables
 
 
 def getOverdueReceivables():
-    overdueReceivables = {"overdueReceivablesVal": "90.99",
-                          "overdueReceivablesPct": "43"}
+    overdueReceivables = {"overdueReceivablesVal": "",
+                          "overdueReceivablesPct": ""}
     return overdueReceivables
 
 
@@ -354,6 +356,11 @@ def getTop5Performers(salesDf):
           top5PerformersGroupBySalesEmpolyeeGrandTotalSum)
     return top5PerformersGroupBySalesEmpolyeeGrandTotalSum
 
+def getAgeingStats(ageingDf):
+    balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
+    return balanceDue
+
+
 
 def getSaleDataByYearMonthCompanyCode(request):
     # get database obj
@@ -389,12 +396,22 @@ def getSaleDataByYearMonthCompanyCode(request):
     })
     salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
     currentMonthYearVsLastMonthYearStats = getIndicatorCurrentMonthYearVsLastMonthYear(salesDf)
+
+
+    # Ageing data
+    ageingCollectionName = dbname["ageing_data"]
+    ageingItemDetails = ageingCollectionName.find()
+    ageingItemList = list(ageingItemDetails)
+    ageingDf = pd.DataFrame(ageingItemList)
+    balanceDue = getAgeingStats(ageingDf)
+
+
     salesDataDict = {"salesData": json.loads(json_util.dumps(itemList)),
                      "totalSales": getTotalSale(currentMonthYearVsLastMonthYearStats[0]),
                      "salesTarget": getSalesTarget(),
                      "targetAchievement": getTargetAchievement(),
                      "salesLastYear": getSalesLastYear(currentMonthYearVsLastMonthYearStats[0]),
-                     "accountReceivables": getAccountReceivables(),
+                     "accountReceivables": getAccountReceivables(ageingDf),
                      "overdueReceivables": getOverdueReceivables(),
                      "topCustomers": getTopCustomers(salesDf),  # list
                      "topProducts": getTopProducts(salesDf),  # list
