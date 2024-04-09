@@ -13,16 +13,17 @@ import json
 from fastapi.middleware.cors import CORSMiddleware
 from time import time
 from bson import json_util
+import logging
 
-
-
+# creating the logger object
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 counter = 1
 
 
 def job_counter():
     global counter
     counter = counter + 1
-    print('cron job: call you https requests here...', counter)
+    logging.info('cron job: call you https requests here...', counter)
 
 
 def getS3File():
@@ -31,12 +32,12 @@ def getS3File():
 
 # @asynccontextmanager
 # async def lifespan(_: FastAPI):
-#     print('app started....')
+#     logging.info('app started....')
 #     scheduler = BackgroundScheduler()
 #     scheduler.add_job(id="job1", func=getS3File, trigger='cron', minute='*/1')
 #     scheduler.start()
 #     yield
-#     print('app stopped...')
+#     logging.info('app stopped...')
 #     scheduler.shutdown(wait=False)
 #
 #
@@ -110,7 +111,7 @@ async def getSalesOverviewData():
     response = json.dumps(list(salesData), default=json_util.default)
 
     endTime_getSalesOverviewData = time()
-    print("Time taken for GET getSalesOverviewData() {}".format(endTime_getSalesOverviewData - startTime_getSalesOverviewData))
+    logging.info("Time taken for GET getSalesOverviewData() {}".format(endTime_getSalesOverviewData - startTime_getSalesOverviewData))
     return {'output': response}
 
 
@@ -127,7 +128,7 @@ async def getSalesData():
     # datafile = 'com/bizware/data/ZSD_LOG_08-03-2024.csv'
     # response = Pymongodb.loadSalesData('saleswoman', datafile)
     endTime_getSalesData = time()
-    print("Time taken for GET getSalesData() {}".format(endTime_getSalesData - startTime_getSalesData))
+    logging.info("Time taken for GET getSalesData() {}".format(endTime_getSalesData - startTime_getSalesData))
     return {'output': response}
 
 
@@ -144,10 +145,10 @@ async def getSalesData(request: SalesRequest):
     # response = Pymongodb.loadSalesData('saleswoman', datafile)
     response = Pymongodb.getSaleDataByYearMonthCompanyCode(request)
     # response = json.loads(json_util.dumps(salesData))
-    # print("Sales Data - ", response)
+    # logging.info("Sales Data - ", response)
     # return JSONResponse(response)
     endTime_getSalesData = time()
-    print("Time taken for POST getSalesData() {}".format(endTime_getSalesData - startTime_getSalesData))
+    logging.info("Time taken for POST getSalesData() {}".format(endTime_getSalesData - startTime_getSalesData))
     return response
 
 
@@ -159,10 +160,10 @@ async def getCustomerAgeingData():
     # Retrieve a collection named "ageing_data" from database
     collectionName = dbname["ageing_data"]
     ageingData = Pymongodb.getData(collectionName)
-    # response = json.loads(json_util.dumps(ageingData))
-    response = json.dumps(list(ageingData), default=json_util.default)
+    response = json.loads(json_util.dumps(list(ageingData)))
+    # response = json.dumps(list(ageingData), default=json_util.default)
     endTime_getCustomerAgeingData = time()
-    print("Time taken for getCustomerAgeingData() {}".format(endTime_getCustomerAgeingData - startTime_getCustomerAgeingData))
+    logging.info("Time taken for getCustomerAgeingData() {}".format(endTime_getCustomerAgeingData - startTime_getCustomerAgeingData))
     return {'output': response}
 
 
@@ -174,10 +175,10 @@ async def getCustomerAgeingOverviewData():
     # Retrieve a collection named "ageing_master_data" from database
     collectionName = dbname["ageing_master_data"]
     ageingData = Pymongodb.getData(collectionName)
-    # response = json.loads(json_util.dumps(ageingData))
-    response = json.dumps(list(ageingData), default=json_util.default)
+    response = json.loads(json_util.dumps(ageingData))
+    # response = json.dumps(list(ageingData), default=json_util.default)
     endTime_getCustomerAgeingOverviewData = time()
-    print("Time taken for getAccountReceivables() {}".format(endTime_getCustomerAgeingOverviewData - startTime_getCustomerAgeingOverviewData))
+    logging.info("Time taken for getAccountReceivables() {}".format(endTime_getCustomerAgeingOverviewData - startTime_getCustomerAgeingOverviewData))
     return {'output': response}
 
 
