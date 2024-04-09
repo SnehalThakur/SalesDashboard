@@ -13,7 +13,7 @@ import calendar
 # import motor
 from bson import json_util
 import json
-
+from time import time
 # creating the date object of today's date
 todays_date = date.today()
 # todays_date = date(2023, 9, 1)
@@ -293,9 +293,10 @@ def getAccountReceivables(ageingDf):
     return accountReceivables
 
 
-def getOverdueReceivables():
-    overdueReceivables = {"overdueReceivablesVal": "90.99",
-                          "overdueReceivablesPct": "43"}
+def getOverdueReceivables(ageingDf):
+    balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
+    overdueReceivables = {"overdueReceivablesVal": balanceDue,
+                          "overdueReceivablesPct": ""}
     return overdueReceivables
 
 
@@ -378,11 +379,11 @@ def getSaleDataByYearMonthCompanyCode(request):
     #     }
     # })
     # salesDf = pd.json_normalize(itemDetails)
-    itemList = []
-    for item in itemDetails:
-        # This does not give a very readable output
-        itemList.append(item)
-    # itemList = list(itemDetails)
+    # itemList = []
+    # for item in itemDetails:
+    #     # This does not give a very readable output
+    #     itemList.append(item)
+    itemList = list(itemDetails)
     salesDf = pd.DataFrame(itemList)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
     # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
@@ -405,7 +406,7 @@ def getSaleDataByYearMonthCompanyCode(request):
                      "targetAchievement": getTargetAchievement(),
                      "salesLastYear": getSalesLastYear(currentMonthYearVsLastMonthYearStats[0]),
                      "accountReceivables": getAccountReceivables(ageingDf),
-                     "overdueReceivables": getOverdueReceivables(),
+                     "overdueReceivables": getOverdueReceivables(ageingDf),
                      "topCustomers": getTopCustomers(salesDf),  # list
                      "topProducts": getTopProducts(salesDf),  # list
                      "topDivisions": getTopDivisions(salesDf),  # list
@@ -435,7 +436,7 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'zsdlogNew.csv'
+    saleDatafile = 'Aishwarya_Sales_Data_05-04-2024_to_08-04-2024.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
