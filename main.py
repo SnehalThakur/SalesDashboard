@@ -11,7 +11,7 @@ from utils.AWSS3Util import s3_download, s3_download_file
 from bson import json_util
 import json
 from fastapi.middleware.cors import CORSMiddleware
-
+from time import time
 
 
 counter = 1
@@ -95,7 +95,8 @@ def read_item(item_id: int, q: Union[str, None] = None):
 #     return {'file_name': file_name}
 
 @app.get('/sales-overview-data')
-async def getSalesData():
+async def getSalesOverviewData():
+    startTime_getSalesOverviewData = time()
     # Get the database
     dbname = Pymongodb.get_database()
 
@@ -103,12 +104,17 @@ async def getSalesData():
     collectionName = dbname["salesdata"]
     salesData = Pymongodb.getData(collectionName)
 
-    response = json.loads(json_util.dumps(salesData))
+    # response = json.loads(json_util.dumps(salesData))
+
+    response = list(salesData)
+    endTime_getSalesOverviewData = time()
+    print("Time taken for GET getSalesOverviewData() {}".format(endTime_getSalesOverviewData - startTime_getSalesOverviewData))
     return {'output': response}
 
 
 @app.get('/sales-data')
 async def getSalesData():
+    startTime_getSalesData = time()
     # Get the database
     dbname = Pymongodb.get_database()
     # Retrieve a collection named "sales_data" from database
@@ -118,6 +124,8 @@ async def getSalesData():
 
     # datafile = 'com/bizware/data/ZSD_LOG_08-03-2024.csv'
     # response = Pymongodb.loadSalesData('saleswoman', datafile)
+    endTime_getSalesData = time()
+    print("Time taken for GET getSalesData() {}".format(endTime_getSalesData - startTime_getSalesData))
     return {'output': response}
 
 
@@ -129,36 +137,45 @@ class SalesRequest(BaseModel):
 
 @app.post('/sales-data')
 async def getSalesData(request: SalesRequest):
-
+    startTime_getSalesData = time()
     # datafile = 'com/bizware/data/ZSD_LOG_08-03-2024.csv'
     # response = Pymongodb.loadSalesData('saleswoman', datafile)
-    salesData = Pymongodb.getSaleDataByYearMonthCompanyCode(request)
-    response = json.loads(json_util.dumps(salesData))
+    response = Pymongodb.getSaleDataByYearMonthCompanyCode(request)
+    # response = json.loads(json_util.dumps(salesData))
     # print("Sales Data - ", response)
     # return JSONResponse(response)
+    endTime_getSalesData = time()
+    print("Time taken for POST getSalesData() {}".format(endTime_getSalesData - startTime_getSalesData))
     return response
 
 
 @app.get('/customer-ageing-data')
 async def getCustomerAgeingData():
+    startTime_getCustomerAgeingData = time()
     # Get the database
     dbname = Pymongodb.get_database()
     # Retrieve a collection named "ageing_data" from database
     collectionName = dbname["ageing_data"]
     ageingData = Pymongodb.getData(collectionName)
-    response = json.loads(json_util.dumps(ageingData))
-
+    # response = json.loads(json_util.dumps(ageingData))
+    response = list(ageingData)
+    endTime_getCustomerAgeingData = time()
+    print("Time taken for getCustomerAgeingData() {}".format(endTime_getCustomerAgeingData - startTime_getCustomerAgeingData))
     return {'output': response}
 
 
 @app.get('/customer-ageing-overview-data')
 async def getCustomerAgeingOverviewData():
+    startTime_getCustomerAgeingOverviewData = time()
     # Get the database
     dbname = Pymongodb.get_database()
     # Retrieve a collection named "ageing_master_data" from database
     collectionName = dbname["ageing_master_data"]
     ageingData = Pymongodb.getData(collectionName)
-    response = json.loads(json_util.dumps(ageingData))
+    # response = json.loads(json_util.dumps(ageingData))
+    response = list(ageingData)
+    endTime_getCustomerAgeingOverviewData = time()
+    print("Time taken for getAccountReceivables() {}".format(endTime_getCustomerAgeingOverviewData - startTime_getCustomerAgeingOverviewData))
     return {'output': response}
 
 

@@ -14,9 +14,9 @@ import calendar
 from bson import json_util
 import json
 from time import time
+import getopt, sys
 # creating the date object of today's date
 todays_date = date.today()
-# todays_date = date(2023, 9, 1)
 current_year = todays_date.year
 current_month = todays_date.month
 # current_month_text = todays_date.strftime("%B") # March
@@ -25,7 +25,7 @@ current_day = todays_date.day
 year_entire = todays_date.strftime("%Y")
 
 
-# # printing todays date
+# # printing today's date
 # print("Current date: ", todays_date)
 #
 # # fetching the current year, month and day of today
@@ -34,6 +34,36 @@ year_entire = todays_date.strftime("%Y")
 # print("Current month :", current_month_text)
 # print("Current day:", current_day)
 
+
+# Remove 1st argument from the
+# list of command line arguments
+argumentList = sys.argv[1:]
+
+# Options
+options = "sat:"
+
+# Long options
+long_options = ["sales", "ageing", "target"]
+
+try:
+    # Parsing argument
+    arguments, values = getopt.getopt(argumentList, options, long_options)
+
+    # checking each argument
+    for currentArgument, currentValue in arguments:
+
+        if currentArgument in ("-s", "--sales"):
+            print("Loading sales data")
+
+        elif currentArgument in ("-a", "--ageing"):
+            print("Loading Ageing data")
+
+        elif currentArgument in ("-t", "--target"):
+            print(("Loading target data (%s)") % (currentValue))
+
+except getopt.error as err:
+    # output error, and return with an error code
+    print(str(err))
 
 # get previous month
 def getPreviousMonth():
@@ -113,6 +143,7 @@ def loadSalesData(collection_name, datafile):
          'TAmtAftTax', 'GrandTotal', 'DistrnChnl', 'SalesEmply', 'HQCode']]
 
     salesColumns['CompanyName'] = salesColumns['CompCode'].map(sales.companyDict)
+
     salesColumns[
         ['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode', 'DistrnChnl',
          'Bill2Party']] = \
@@ -127,12 +158,13 @@ def loadSalesData(collection_name, datafile):
     # print('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    collection_name.insert_many(salesDataList)
+    # collection_name.insert_many(salesDataList)
     # print('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
 
 def getCurrentMonthSales(salesDf):
+    startTime_currentMonthSales = time()
     currentMonthSales = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
             salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby(
         ['invoiceMonth', 'invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
@@ -143,10 +175,13 @@ def getCurrentMonthSales(salesDf):
                                  "grandTotal": val
                                  }
         currentMonthSalesList.append(currentMonthSalesDict)
+    endTime_currentMonthSales = time()
+    print("Time taken for getCurrentMonthSales() {}".format(endTime_currentMonthSales - startTime_currentMonthSales))
     return currentMonthSalesList
 
 
 def getPreviousMonthSales(salesDf):
+    startTime_PreviousMonthSales = time()
     previousMonthSales = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
             salesDf["invoiceMonth"] == calendar.month_abbr[previous_month])].groupby(
         ['invoiceMonth', 'invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
@@ -157,10 +192,13 @@ def getPreviousMonthSales(salesDf):
                                   "grandTotal": val
                                   }
         previousMonthSalesList.append(previousMonthSalesDict)
+    endTime_PreviousMonthSales = time()
+    print("Time taken for getPreviousMonthSales() {}".format(endTime_PreviousMonthSales - startTime_PreviousMonthSales))
     return previousMonthSalesList
 
 
 def getCurrentYearSales(salesDf):
+    startTime_CurrentYearSales = time()
     currentMonthSales = salesDf[salesDf["invoiceYear"].astype(int) == current_year].groupby(
         ['invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
     currentYearSalesList = []
@@ -169,10 +207,13 @@ def getCurrentYearSales(salesDf):
                                 "grandTotal": val
                                 }
         currentYearSalesList.append(currentYearSalesDict)
+    endTime_CurrentYearSales = time()
+    print("Time taken for getCurrentYearSales() {}".format(endTime_CurrentYearSales - startTime_CurrentYearSales))
     return currentYearSalesList
 
 
 def getPreviousYearSales(salesDf):
+    startTime_PreviousYearSales = time()
     previousYear = current_year - 1
     previousYearSales = salesDf[salesDf["invoiceYear"].astype(int) == previousYear].groupby(
         ['invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
@@ -182,10 +223,13 @@ def getPreviousYearSales(salesDf):
                                  "grandTotal": val
                                  }
         previousYearSalesList.append(previousYearSalesDict)
+    endTime_PreviousYearSales = time()
+    print("Time taken for getPreviousYearSales() {}".format(endTime_PreviousYearSales - startTime_PreviousYearSales))
     return previousYearSalesList
 
 
 def getCurrentMonthPreviousYearSales(salesDf):
+    startTime_CurrentMonthPreviousYearSales = time()
     currentMonthPreviousYearSales = salesDf[(salesDf["invoiceYear"].astype(int) == current_year - 1) & (
             salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby(
         ['invoiceMonth', 'invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
@@ -196,42 +240,50 @@ def getCurrentMonthPreviousYearSales(salesDf):
                                              "grandTotal": val
                                              }
         currentMonthPreviousYearSalesList.append(currentMonthPreviousYearSalesDict)
+    endTime_CurrentMonthPreviousYearSales = time()
+    print("Time taken for getCurrentMonthPreviousYearSales() {}".format(endTime_CurrentMonthPreviousYearSales - startTime_CurrentMonthPreviousYearSales))
     return currentMonthPreviousYearSalesList
 
 
 def getIndicatorCurrentMonthYearVsLastMonthYear(salesDf):
+    startTime_IndicatorCurrentMonthYearVsLastMonthYear = time()
     currentMonthSales = 0
     currentMonthSalesDict = {}
-    if len(getCurrentMonthSales(salesDf)) > 0:
-        currentMonthSalesDict = getCurrentMonthSales(salesDf)[0]
+    currentMonthSalesData = getCurrentMonthSales(salesDf)
+    if len(currentMonthSalesData) > 0:
+        currentMonthSalesDict = currentMonthSalesData[0]
         currentMonthSales = currentMonthSalesDict.get('grandTotal')
 
     previousMonthSales = 0
     previousMonthSalesDict = {}
-    if len(getPreviousMonthSales(salesDf)) > 0:
-        previousMonthSalesDict = getPreviousMonthSales(salesDf)[0]
+    previousMonthSalesData = getPreviousMonthSales(salesDf)
+    if len(previousMonthSalesData) > 0:
+        previousMonthSalesDict = previousMonthSalesData[0]
         previousMonthSales = previousMonthSalesDict.get('grandTotal')
 
     rateChangeInPercent = round((currentMonthSales - previousMonthSales) * 100 / previousMonthSales, 3)
 
     currentYearSales = 0
     currentYearSalesDict = {}
-    if len(getCurrentYearSales(salesDf)) > 0:
-        currentYearSalesDict = getCurrentYearSales(salesDf)[0]
+    currentYearSalesData = getCurrentYearSales(salesDf)
+    if len(currentYearSalesData) > 0:
+        currentYearSalesDict = currentYearSalesData[0]
         currentYearSales = currentYearSalesDict.get('grandTotal')
 
     previousYearSales = 0
     previousYearSalesDict = {}
-    if len(getPreviousYearSales(salesDf)) > 0:
-        previousYearSalesDict = getPreviousYearSales(salesDf)[0]
+    previousYearSalesData = getPreviousYearSales(salesDf)
+    if len(previousYearSalesData) > 0:
+        previousYearSalesDict = previousYearSalesData[0]
         previousYearSales = previousYearSalesDict.get('grandTotal')
 
     rateChangeInPercentYearly = round((currentYearSales - previousYearSales) * 100 / previousYearSales, 3)
 
     currentMonthPreviousYearSales = 0
     currentMonthPreviousYearSalesDict = {}
-    if len(getCurrentMonthPreviousYearSales(salesDf)) > 0:
-        currentMonthPreviousYearSalesDict = getCurrentMonthPreviousYearSales(salesDf)[0]
+    currentMonthPreviousYearSalesData = getCurrentMonthPreviousYearSales(salesDf)
+    if len(currentMonthPreviousYearSalesData) > 0:
+        currentMonthPreviousYearSalesDict = currentMonthPreviousYearSalesData[0]
         currentMonthPreviousYearSales = currentMonthPreviousYearSalesDict.get('grandTotal')
 
     rateChangeInPercentCurrentMonthLastYear = round((currentMonthSales - currentMonthPreviousYearSales) * 100 / currentMonthPreviousYearSales, 3)
@@ -250,57 +302,78 @@ def getIndicatorCurrentMonthYearVsLastMonthYear(salesDf):
         "rateChangeInPercentCurrentMonthLastYear": rateChangeInPercentCurrentMonthLastYear
     }
     indicatorList.append(indicator)
+    endTime_IndicatorCurrentMonthYearVsLastMonthYear = time()
+    print("Time taken for getIndicatorCurrentMonthYearVsLastMonthYear() {}".format(endTime_IndicatorCurrentMonthYearVsLastMonthYear - startTime_IndicatorCurrentMonthYearVsLastMonthYear))
     return indicatorList
 
 
 def getTotalSale(currentMonthYearVsLastMonthYear):
+    startTime_getTotalSale = time()
     totalSales = {"MoM": currentMonthYearVsLastMonthYear["currentMonthSales"]['grandTotal'],
                   "MoMPct": currentMonthYearVsLastMonthYear["rateChange"],
                   "YoY": currentMonthYearVsLastMonthYear["currentYearSales"]['grandTotal'],
                   "YoYPct": currentMonthYearVsLastMonthYear["rateChangeYear"]}
+    endTime_getTotalSale = time()
+    print("Time taken for getTotalSale() {}".format(endTime_getTotalSale - startTime_getTotalSale))
     return totalSales
 
 
 def getSalesTarget():
+    startTime_getSalesTarget = time()
     salesTarget = {"MoM": "80.94",
                    "MoMPct": "43",
                    "YoY": "90.96",
                    "YoYPct": "43"}
+    endTime_getSalesTarget = time()
+    print("Time taken for getSalesTarget() {}".format(endTime_getSalesTarget - startTime_getSalesTarget))
     return salesTarget
 
 
 def getTargetAchievement():
+    startTime_getTargetAchievement = time()
     targetAchievement = {"MoM": "90.99",
                          "MoMPct": "43",
                          "YoY": "99.96",
                          "YoYPct": "43"}
+    endTime_getTargetAchievement = time()
+    print("Time taken for getTargetAchievement() {}".format(endTime_getTargetAchievement - startTime_getTargetAchievement))
     return targetAchievement
 
 
 def getSalesLastYear(currentMonthYearVsLastMonthYear):
+    startTime_getSalesLastYear = time()
     salesLastYear = {"MoM": currentMonthYearVsLastMonthYear["currentMonthPreviousYearSales"],
                      "MoMPct": currentMonthYearVsLastMonthYear["rateChangeInPercentCurrentMonthLastYear"],
                      "YoY": currentMonthYearVsLastMonthYear["previousYearSales"]['grandTotal'],
                      "YoYPct": currentMonthYearVsLastMonthYear["rateChangeYear"]}
+    endTime_getSalesLastYear = time()
+    print("Time taken for getSalesLastYear() {}".format(endTime_getSalesLastYear - startTime_getSalesLastYear))
     return salesLastYear
 
 
 def getAccountReceivables(ageingDf):
+    startTime_getAccountReceivables = time()
     balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
 
     accountReceivables = {"accountReceivablesVal": balanceDue,
                           "accountReceivablesPct": ""}
+    endTime_getAccountReceivables = time()
+    print("Time taken for getAccountReceivables() {}".format(endTime_getAccountReceivables - startTime_getAccountReceivables))
     return accountReceivables
 
 
 def getOverdueReceivables(ageingDf):
+    startTime_getOverdueReceivables = time()
     balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
     overdueReceivables = {"overdueReceivablesVal": balanceDue,
                           "overdueReceivablesPct": ""}
+    endTime_getOverdueReceivables = time()
+    print("Time taken for getOverdueReceivables() {}".format(endTime_getOverdueReceivables - startTime_getOverdueReceivables))
     return overdueReceivables
 
 
 def getTopCustomers(salesDf):
+    startTime_getTopCustomers = time()
     topCustomers = []
     # topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToParty', 'billToPartName'])['grandTotal'].sum()
     # topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToPartName'])['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
@@ -314,10 +387,13 @@ def getTopCustomers(salesDf):
                             }
         topCustomersList.append(topCustomersDict)
     print("Get Grand Total sum of the grouped data by billToParty, billToPartName : ", topCustomersList)
+    endTime_getTopCustomers = time()
+    print("Time taken for getTopCustomers() {}".format(endTime_getTopCustomers - startTime_getTopCustomers))
     return topCustomersList
 
 
 def getTopProducts(salesDf):
+    startTime_getTopProducts = time()
     topProducts = []
     # topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemCode', 'itemDescription'])['grandTotal'].sum()
     topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemCode', 'itemDescription'])[
@@ -330,10 +406,13 @@ def getTopProducts(salesDf):
                            }
         topProductsList.append(topProductsDict)
     print("Get Grand Total sum of the grouped data by itemCode, itemDescription : ", topProductsList)
+    endTime_getTopProducts = time()
+    print("Time taken for getTopProducts() {}".format(endTime_getTopProducts - startTime_getTopProducts))
     return topProductsList
 
 
 def getTopDivisions(salesDf):
+    startTime_getTopDivisions = time()
     topDivisions = []
     # topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['division', 'divisionDescription'])['grandTotal'].sum()
     topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['division', 'divisionDescription'])[
@@ -346,19 +425,23 @@ def getTopDivisions(salesDf):
                            }
         topDivisionsList.append(topDivisionDict)
     print("Get Grand Total sum of the grouped data by division, divisionDescription : ", topDivisionsList)
+    endTime_getTopDivisions = time()
+    print("Time taken for getTopDivisions() {}".format(endTime_getTopDivisions - startTime_getTopDivisions))
     return topDivisionsList
 
 
 def getTop5Performers(salesDf):
+    startTime_getTop5Performers = time()
     # top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum()
-    top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum().sort_values(
-        ascending=False).head(5).to_dict()
-    print("Get Grand Total sum of the grouped data by salesEmpolyee : ",
-          top5PerformersGroupBySalesEmpolyeeGrandTotalSum)
-    return top5PerformersGroupBySalesEmpolyeeGrandTotalSum
+    top5PerformersGroupBySalesEmployeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
+    print("Get Grand Total sum of the grouped data by salesEmpolyee : ", top5PerformersGroupBySalesEmployeeGrandTotalSum)
+    endTime_getTop5Performers = time()
+    print("Time taken for getTop5Performers() {}".format(endTime_getTop5Performers - startTime_getTop5Performers))
+    return top5PerformersGroupBySalesEmployeeGrandTotalSum
 
 
 def getSaleDataByYearMonthCompanyCode(request):
+    startTime_getSaleDataByYearMonthCompanyCode = time()
     # get database obj
     dbname = get_database()
 
@@ -391,8 +474,10 @@ def getSaleDataByYearMonthCompanyCode(request):
         lambda x: calendar.month_abbr[int(x)]
     })
     salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
+    startTime_getIndicatorCurrentMonthYearVsLastMonthYear = time()
     currentMonthYearVsLastMonthYearStats = getIndicatorCurrentMonthYearVsLastMonthYear(salesDf)
-
+    endTime_getIndicatorCurrentMonthYearVsLastMonthYear = time()
+    print("Time taken for getIndicatorCurrentMonthYearVsLastMonthYear() inside getSaleDataByYearMonthCompanyCode() {}".format(endTime_getIndicatorCurrentMonthYearVsLastMonthYear - startTime_getIndicatorCurrentMonthYearVsLastMonthYear))
     # Ageing data
     ageingCollectionName = dbname["ageing_data"]
     ageingItemDetails = ageingCollectionName.find()
@@ -413,6 +498,8 @@ def getSaleDataByYearMonthCompanyCode(request):
                      "top5Performers": getTop5Performers(salesDf),  # list
                      "indicator": currentMonthYearVsLastMonthYearStats  # list
                      }
+    endTime_getSaleDataByYearMonthCompanyCode = time()
+    print("Time taken for getSaleDataByYearMonthCompanyCode() {}".format(endTime_getSaleDataByYearMonthCompanyCode - startTime_getSaleDataByYearMonthCompanyCode))
     return salesDataDict
 
 
