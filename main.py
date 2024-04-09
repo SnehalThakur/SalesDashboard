@@ -12,6 +12,8 @@ from bson import json_util
 import json
 from fastapi.middleware.cors import CORSMiddleware
 from time import time
+from bson import json_util
+
 
 
 counter = 1
@@ -105,8 +107,8 @@ async def getSalesOverviewData():
     salesData = Pymongodb.getData(collectionName)
 
     # response = json.loads(json_util.dumps(salesData))
+    response = json.dumps(list(salesData), default=json_util.default)
 
-    response = list(salesData)
     endTime_getSalesOverviewData = time()
     print("Time taken for GET getSalesOverviewData() {}".format(endTime_getSalesOverviewData - startTime_getSalesOverviewData))
     return {'output': response}
@@ -158,7 +160,7 @@ async def getCustomerAgeingData():
     collectionName = dbname["ageing_data"]
     ageingData = Pymongodb.getData(collectionName)
     # response = json.loads(json_util.dumps(ageingData))
-    response = list(ageingData)
+    response = json.dumps(list(ageingData), default=json_util.default)
     endTime_getCustomerAgeingData = time()
     print("Time taken for getCustomerAgeingData() {}".format(endTime_getCustomerAgeingData - startTime_getCustomerAgeingData))
     return {'output': response}
@@ -173,7 +175,7 @@ async def getCustomerAgeingOverviewData():
     collectionName = dbname["ageing_master_data"]
     ageingData = Pymongodb.getData(collectionName)
     # response = json.loads(json_util.dumps(ageingData))
-    response = list(ageingData)
+    response = json.dumps(list(ageingData), default=json_util.default)
     endTime_getCustomerAgeingOverviewData = time()
     print("Time taken for getAccountReceivables() {}".format(endTime_getCustomerAgeingOverviewData - startTime_getCustomerAgeingOverviewData))
     return {'output': response}
