@@ -164,7 +164,7 @@ def loadSalesData(collection_name, datafile):
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    collection_name.insert_many(salesDataList)
+    # collection_name.insert_many(salesDataList)
     # logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -564,7 +564,7 @@ if __name__ == "__main__":
     salesTargetDataFile = 'Final Sales Person Data-all divisions.csv'
     salesTargetDataList = salesTarget.salesTargetFileReaderAndLoader(salesTargetDataFile)
     sales_target_collection_name = dbname["sales_target_data"]
-    salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
+    # salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
 
     # item_details = ageing_collection_name.find()
     # for item in item_details:
@@ -578,4 +578,4 @@ if __name__ == "__main__":
     #     "expiry_date": expiry
     # }
     # collection_name.insert_one(item_3)
-    getSaleDataByYearMonthCompanyCode('request')
+    # getSaleDataByYearMonthCompanyCode('request')
