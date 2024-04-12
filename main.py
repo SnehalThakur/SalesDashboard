@@ -44,7 +44,6 @@ def getS3File():
 # app = FastAPI(lifespan=lifespan)
 app = FastAPI()
 
-
 origins = [
     "http://localhost",
     "http://localhost:8000",
@@ -59,6 +58,7 @@ app.add_middleware(CORSMiddleware,
                    allow_credentials=True,
                    allow_methods=["*"],
                    allow_headers=["*"])
+
 
 @app.get("/")
 def read_root():
@@ -111,7 +111,8 @@ async def getSalesOverviewData():
     response = json.dumps(list(salesData), default=json_util.default)
 
     endTime_getSalesOverviewData = time()
-    logging.info("Time taken for GET getSalesOverviewData() {}".format(endTime_getSalesOverviewData - startTime_getSalesOverviewData))
+    logging.info("Time taken for GET getSalesOverviewData() {}".format(
+        endTime_getSalesOverviewData - startTime_getSalesOverviewData))
     return {'output': response}
 
 
@@ -163,7 +164,8 @@ async def getCustomerAgeingData():
     response = json.loads(json_util.dumps(list(ageingData)))
     # response = json.dumps(list(ageingData), default=json_util.default)
     endTime_getCustomerAgeingData = time()
-    logging.info("Time taken for getCustomerAgeingData() {}".format(endTime_getCustomerAgeingData - startTime_getCustomerAgeingData))
+    logging.info("Time taken for getCustomerAgeingData() {}".format(
+        endTime_getCustomerAgeingData - startTime_getCustomerAgeingData))
     return {'output': response}
 
 
@@ -178,7 +180,23 @@ async def getCustomerAgeingOverviewData():
     response = json.loads(json_util.dumps(ageingData))
     # response = json.dumps(list(ageingData), default=json_util.default)
     endTime_getCustomerAgeingOverviewData = time()
-    logging.info("Time taken for getAccountReceivables() {}".format(endTime_getCustomerAgeingOverviewData - startTime_getCustomerAgeingOverviewData))
+    logging.info("Time taken for getAccountReceivables() {}".format(
+        endTime_getCustomerAgeingOverviewData - startTime_getCustomerAgeingOverviewData))
+    return {'output': response}
+
+
+@app.get('/sales-target-data')
+async def getSalesTargetData():
+    startTime_getSalesTargetData = time()
+    # Get the database
+    dbname = Pymongodb.get_database()
+    # Retrieve a collection named "sales_target_data" from database
+    collectionName = dbname["sales_target_data"]
+    salesTargetData = Pymongodb.getData(collectionName)
+    response = json.loads(json_util.dumps(list(salesTargetData)))
+    endTime_getSalesTargetData = time()
+    logging.info(
+        "Time taken for getSalesTargetData() {}".format(endTime_getSalesTargetData - startTime_getSalesTargetData))
     return {'output': response}
 
 
