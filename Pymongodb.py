@@ -164,7 +164,7 @@ def loadSalesData(collection_name, datafile):
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    # collection_name.insert_many(salesDataList)
+    collection_name.insert_many(salesDataList)
     # logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -546,7 +546,7 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'Aishwarya_Sales_Data_2022-23_to_2023-2024_12042024.csv'
+    saleDatafile = 'grandtotal_12_to_16_april.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
@@ -564,7 +564,7 @@ if __name__ == "__main__":
     salesTargetDataFile = 'Final Sales Person Data-all divisions.csv'
     salesTargetDataList = salesTarget.salesTargetFileReaderAndLoader(salesTargetDataFile)
     sales_target_collection_name = dbname["sales_target_data"]
-    # salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
+    salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
 
     # item_details = ageing_collection_name.find()
     # for item in item_details:
