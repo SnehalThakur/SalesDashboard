@@ -1,6 +1,7 @@
 """
 Copyright (c) 2024 - Bizware International
 """
+from pydantic import BaseModel
 from pymongo import MongoClient
 # from com.bizware.config import settings
 import urllib.parse
@@ -460,32 +461,34 @@ def getTop5Performers(salesDf):
     return top5PerformersGroupBySalesEmployeeGrandTotalSum
 
 
+def getSalesDataCurrentAndPreviousYear(salesDf):
+    current_year
+    previous_year = current_year - 1
+
+    salesDfNew = salesDf[(salesDf.invoiceYear.isin([str(previous_year), str(current_year)]))]
+
+    return salesDfNew
+
+
 def getSaleDataByYearMonthCompanyCode(request):
     startTime_getSaleDataByYearMonthCompanyCode = time()
+    # {"year": "2024", "month": "march", "companyCode": "c2002"}
+    try:
+        year = request['year']
+        month = request['month']
+        companyCode = request['companyCode']
+    except:
+        year = request.year
+        month = request.month
+        companyCode = request.companyCode
+
     # get database obj
     dbname = get_database()
 
     # Retrieve a collection named "sales_data" from database
     collection_name = dbname["sales_data"]
     itemDetails = collection_name.find()
-    # st_date = date(2023, 1, 1)
-    # end_date = date(2024, 1, 1)
-    # itemDetails = collection_name.find({
-    #     'invoiceDate': {
-    #         '$and': [
-    #             {'$gte': ['$st_date', st_date],
-    #              },
-    #             {
-    #                 '$lte': ['$end_date', end_date],
-    #             }
-    #         ]
-    #     }
-    # })
-    # salesDf = pd.json_normalize(itemDetails)
-    # itemList = []
-    # for item in itemDetails:
-    #     # This does not give a very readable output
-    #     itemList.append(item)
+
     itemList = list(itemDetails)
     salesDf = pd.DataFrame(itemList)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
@@ -494,6 +497,9 @@ def getSaleDataByYearMonthCompanyCode(request):
         lambda x: calendar.month_abbr[int(x)]
     })
     salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
+
+    salesDfCurrentAndPreviousYear = getSalesDataCurrentAndPreviousYear(salesDf)
+
     startTime_getIndicatorCurrentMonthYearVsLastMonthYear = time()
     currentMonthYearVsLastMonthYearStats = getIndicatorCurrentMonthYearVsLastMonthYear(salesDf)
     endTime_getIndicatorCurrentMonthYearVsLastMonthYear = time()
@@ -507,7 +513,9 @@ def getSaleDataByYearMonthCompanyCode(request):
     ageingDf = pd.DataFrame(ageingItemList)
     # balanceDue = getAgeingStats(ageingDf)
 
-    salesDataDict = {"salesData": json.loads(json_util.dumps(itemList)),
+    salesDataDict = {
+        "salesData": salesDfCurrentAndPreviousYear,
+        # "salesData": json.loads(json_util.dumps(itemList)),
                      "totalSales": getTotalSale(currentMonthYearVsLastMonthYearStats[0]),
                      "salesTarget": getSalesTarget(),
                      "targetAchievement": getTargetAchievement(),
@@ -546,7 +554,7 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'grandtotal_12_to_16_april.csv'
+    saleDatafile = 'Aishwarya_Sales_Data_17-04-24To19-04-24'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
@@ -561,7 +569,7 @@ if __name__ == "__main__":
     # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
 
     # Sales Target
-    salesTargetDataFile = 'Final Sales Person Data-all divisions.csv'
+    salesTargetDataFile = 'SalesEmployeeTargetData.csv'
     salesTargetDataList = salesTarget.salesTargetFileReaderAndLoader(salesTargetDataFile)
     sales_target_collection_name = dbname["sales_target_data"]
     salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
@@ -578,4 +586,4 @@ if __name__ == "__main__":
     #     "expiry_date": expiry
     # }
     # collection_name.insert_one(item_3)
-    # getSaleDataByYearMonthCompanyCode('request')
+    getSaleDataByYearMonthCompanyCode({"year": "2024", "month": "march", "companyCode": "c2002"})
