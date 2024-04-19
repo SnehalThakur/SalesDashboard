@@ -165,8 +165,8 @@ def loadSalesData(collection_name, datafile):
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    collection_name.insert_many(salesDataList)
-    # logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
+    # collection_name.insert_many(salesDataList)
+    logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
 
@@ -422,7 +422,7 @@ def getTopProducts(salesDf):
                            "grandTotal": val
                            }
         topProductsList.append(topProductsDict)
-    logging.info("Get Grand Total sum of the grouped data by itemCode, itemDescription : "+ topProductsList.__str__())
+    logging.info("Get Grand Total sum of the grouped data by itemCode, itemDescription : " + topProductsList.__str__())
     endTime_getTopProducts = time()
     logging.info("Time taken for getTopProducts() {}".format(endTime_getTopProducts - startTime_getTopProducts))
     return topProductsList
@@ -466,6 +466,7 @@ def getSalesDataCurrentAndPreviousYear(salesDf):
 
     salesDfNew = salesDf[(salesDf.invoiceYear.isin([str(previous_year), str(current_year)]))]
 
+    # return salesDfNew
     return salesDfNew.drop(['_id'], axis=1)
 
 
@@ -488,8 +489,8 @@ def getSaleDataByYearMonthCompanyCode(request):
     collection_name = dbname["sales_data"]
     itemDetails = collection_name.find()
 
-    itemList = list(itemDetails)
-    salesDf = pd.DataFrame(itemList)
+    # itemList = list(itemDetails)
+    salesDf = pd.DataFrame(itemDetails)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
     # logging.info("salesDf['invoiceDate'] -"+ salesDf['invoiceDate'])
     # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
@@ -509,25 +510,25 @@ def getSaleDataByYearMonthCompanyCode(request):
     # Ageing data
     ageingCollectionName = dbname["ageing_data"]
     ageingItemDetails = ageingCollectionName.find()
-    ageingItemList = list(ageingItemDetails)
-    ageingDf = pd.DataFrame(ageingItemList)
+    # ageingItemList = list(ageingItemDetails)
+    ageingDf = pd.DataFrame(ageingItemDetails)
     # balanceDue = getAgeingStats(ageingDf)
 
     salesDataDict = {
-        # "salesData": salesDfCurrentAndPreviousYear,
-        "salesData": json.loads(json_util.dumps(salesDfCurrentAndPreviousYear)),
-                     "totalSales": getTotalSale(currentMonthYearVsLastMonthYearStats[0]),
-                     "salesTarget": getSalesTarget(),
-                     "targetAchievement": getTargetAchievement(),
-                     "salesLastYear": getSalesLastYear(currentMonthYearVsLastMonthYearStats[0]),
-                     "accountReceivables": getAccountReceivables(ageingDf),
-                     "overdueReceivables": getOverdueReceivables(ageingDf),
-                     "topCustomers": getTopCustomers(salesDf),  # list
-                     "topProducts": getTopProducts(salesDf),  # list
-                     "topDivisions": getTopDivisions(salesDf),  # list
-                     "top5Performers": getTop5Performers(salesDf),  # list
-                     "indicator": currentMonthYearVsLastMonthYearStats  # list
-                     }
+        "salesData": salesDfCurrentAndPreviousYear.to_json(orient='records'),
+        # "salesData": json.loads(json_util.dumps(salesDfCurrentAndPreviousYear)),
+        "totalSales": getTotalSale(currentMonthYearVsLastMonthYearStats[0]),
+        "salesTarget": getSalesTarget(),
+        "targetAchievement": getTargetAchievement(),
+        "salesLastYear": getSalesLastYear(currentMonthYearVsLastMonthYearStats[0]),
+        "accountReceivables": getAccountReceivables(ageingDf),
+        "overdueReceivables": getOverdueReceivables(ageingDf),
+        "topCustomers": getTopCustomers(salesDf),  # list
+        "topProducts": getTopProducts(salesDf),  # list
+        "topDivisions": getTopDivisions(salesDf),  # list
+        "top5Performers": getTop5Performers(salesDf),  # list
+        "indicator": currentMonthYearVsLastMonthYearStats  # list
+    }
     endTime_getSaleDataByYearMonthCompanyCode = time()
     logging.info("Time taken for getSaleDataByYearMonthCompanyCode() {}".format(
         endTime_getSaleDataByYearMonthCompanyCode - startTime_getSaleDataByYearMonthCompanyCode))
