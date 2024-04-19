@@ -515,7 +515,7 @@ def getSaleDataByYearMonthCompanyCode(request):
     # balanceDue = getAgeingStats(ageingDf)
 
     salesDataDict = {
-        "salesData": salesDfCurrentAndPreviousYear.to_json(orient='records'),
+        "salesData": salesDfCurrentAndPreviousYear.to_dict('records'),
         # "salesData": json.loads(json_util.dumps(salesDfCurrentAndPreviousYear)),
         "totalSales": getTotalSale(currentMonthYearVsLastMonthYearStats[0]),
         "salesTarget": getSalesTarget(),
