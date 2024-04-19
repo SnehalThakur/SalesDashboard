@@ -422,7 +422,7 @@ def getTopProducts(salesDf):
                            "grandTotal": val
                            }
         topProductsList.append(topProductsDict)
-    logging.info("Get Grand Total sum of the grouped data by itemCode, itemDescription : ", topProductsList)
+    logging.info("Get Grand Total sum of the grouped data by itemCode, itemDescription : "+ topProductsList.__str__())
     endTime_getTopProducts = time()
     logging.info("Time taken for getTopProducts() {}".format(endTime_getTopProducts - startTime_getTopProducts))
     return topProductsList
@@ -462,12 +462,11 @@ def getTop5Performers(salesDf):
 
 
 def getSalesDataCurrentAndPreviousYear(salesDf):
-    current_year
     previous_year = current_year - 1
 
     salesDfNew = salesDf[(salesDf.invoiceYear.isin([str(previous_year), str(current_year)]))]
 
-    return salesDfNew
+    return salesDfNew.drop(['_id'], axis=1)
 
 
 def getSaleDataByYearMonthCompanyCode(request):
@@ -492,6 +491,7 @@ def getSaleDataByYearMonthCompanyCode(request):
     itemList = list(itemDetails)
     salesDf = pd.DataFrame(itemList)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
+    logging.info("salesDf['invoiceDate'] -"+ salesDf['invoiceDate'])
     # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
     salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
         lambda x: calendar.month_abbr[int(x)]
@@ -572,7 +572,7 @@ if __name__ == "__main__":
     salesTargetDataFile = 'SalesEmployeeTargetData.csv'
     salesTargetDataList = salesTarget.salesTargetFileReaderAndLoader(salesTargetDataFile)
     sales_target_collection_name = dbname["sales_target_data"]
-    salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
+    # salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
 
     # item_details = ageing_collection_name.find()
     # for item in item_details:
@@ -586,4 +586,4 @@ if __name__ == "__main__":
     #     "expiry_date": expiry
     # }
     # collection_name.insert_one(item_3)
-    # getSaleDataByYearMonthCompanyCode({"year": "2024", "month": "march", "companyCode": "c2002"})
+    getSaleDataByYearMonthCompanyCode({"year": "2024", "month": "march", "companyCode": "c2002"})
