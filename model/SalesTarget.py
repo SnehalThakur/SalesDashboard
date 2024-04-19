@@ -13,24 +13,27 @@ import pandas as pd
 
 
 class SalesTarget(BaseModel):
-    Month: str = Field(..., alias='Month')
-    Year: str = Field(..., alias='Year')
-    ZONE: str = Field(..., alias='ZONE')
+    Month: int = Field(..., alias='Month')
+    Year: int = Field(..., alias='Year')
+    ZONE: str = Field(..., alias='Zone', nullable=True)
+    # ZONE: Optional['ZONE'] = None
     EmployeeCode: str = Field(..., alias='Employee Code')
     EmployeeName: str = Field(..., alias='Employee Name')
     EmployeeDesignation: str = Field(..., alias='Employee Designation')
     HODEmpCode: str = Field(..., alias='HOD Emp code')
     HODName: str = Field(..., alias='HOD Name')
     Country: str = Field(..., alias='Country')
-    RegionState: str = Field(..., alias='Region/State')
-    HQ: str = Field(..., alias='HQ')
+    RegionState: str = Field(..., alias='Region', nullable=True)
+    # RegionState: Optional['Region'] = None
+    # HQ: str = Field(..., alias='HQ', nullable=True)
+    # HQ: Optional['HQ'] = None
     HQCode: str = Field(..., alias='HQ Code')
     City: str = Field(..., alias='City')
-    SAPRegion: str = Field(..., alias='SAP Region')
+    SAPRegion: int = Field(..., alias='SAP Region')
     SAPRegionDescription: str = Field(..., alias='SAP Region Descripation')
     SAPCity: str = Field(..., alias='SAP City')
     Division: str = Field(..., alias='Division')
-    MonthlySalesTarget: str = Field(..., alias='Monthly sales Target')
+    MonthlySalesTarget: int = Field(..., alias='Monthly sales Target')
 
 
 def setSalesTargetData(salesTargetData):
