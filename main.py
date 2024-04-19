@@ -1,11 +1,15 @@
 """
 Copyright (c) 2024 - Bizware International
 """
-
+from contextlib import asynccontextmanager
 from typing import Union
+import os
+from apscheduler.schedulers.background import BackgroundScheduler
 from pydantic import BaseModel
 import uvicorn
 from fastapi import FastAPI, HTTPException, Response, status
+from starlette.responses import JSONResponse
+
 import Pymongodb
 from utils.AWSS3Util import s3_download, s3_download_file
 from bson import json_util
@@ -14,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from time import time
 from bson import json_util
 import logging
+from threading import Thread
 
 # creating the logger object
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
@@ -26,23 +31,23 @@ def job_counter():
     logging.info('cron job: call you https requests here...', counter)
 
 
-def getS3File():
-    s3_download_file()
+def scp_file():
+    os.system('sshpass -p "Sales@123@123" scp salesdata@136.232.18.118:/Sales_Dashboard/* .')
 
 
-# @asynccontextmanager
-# async def lifespan(_: FastAPI):
-#     logging.info('app started....')
-#     scheduler = BackgroundScheduler()
-#     scheduler.add_job(id="job1", func=getS3File, trigger='cron', minute='*/1')
-#     scheduler.start()
-#     yield
-#     logging.info('app stopped...')
-#     scheduler.shutdown(wait=False)
-#
-#
-# app = FastAPI(lifespan=lifespan)
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    logging.info('app started....')
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(id="job1", func=scp_file, trigger='cron', hour='*/2')
+    scheduler.start()
+    yield
+    logging.info('app stopped...')
+    scheduler.shutdown(wait=False)
+
+
+app = FastAPI(lifespan=lifespan)
+# app = FastAPI()
 
 origins = [
     "http://localhost",
@@ -150,7 +155,7 @@ async def getSalesData(request: SalesRequest):
     # return JSONResponse(response)
     endTime_getSalesData = time()
     logging.info("Time taken for POST getSalesData() {}".format(endTime_getSalesData - startTime_getSalesData))
-    return response
+    return JSONResponse(content=response)
 
 
 @app.get('/customer-ageing-data')
@@ -200,22 +205,22 @@ async def getSalesTargetData():
     return {'output': response}
 
 
-@app.get('/download')
-async def download(file_name: str):
-    if not file_name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='No file name provided'
-        )
-
-    contents = await s3_download(key=file_name)
-    return Response(
-        content=contents,
-        headers={
-            'Content-Disposition': f'attachment;filename={file_name}',
-            'Content-Type': 'application/octet-stream',
-        }
-    )
+# @app.get('/download')
+# async def download(file_name: str):
+#     if not file_name:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail='No file name provided'
+#         )
+#
+#     contents = await s3_download(key=file_name)
+#     return Response(
+#         content=contents,
+#         headers={
+#             'Content-Disposition': f'attachment;filename={file_name}',
+#             'Content-Type': 'application/octet-stream',
+#         }
+#     )
 
 
 if __name__ == "__main__":
