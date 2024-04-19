@@ -165,7 +165,7 @@ def loadSalesData(collection_name, datafile):
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    # collection_name.insert_many(salesDataList)
+    collection_name.insert_many(salesDataList)
     # logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -491,7 +491,7 @@ def getSaleDataByYearMonthCompanyCode(request):
     itemList = list(itemDetails)
     salesDf = pd.DataFrame(itemList)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
-    logging.info("salesDf['invoiceDate'] -"+ salesDf['invoiceDate'])
+    # logging.info("salesDf['invoiceDate'] -"+ salesDf['invoiceDate'])
     # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
     salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
         lambda x: calendar.month_abbr[int(x)]
@@ -514,8 +514,8 @@ def getSaleDataByYearMonthCompanyCode(request):
     # balanceDue = getAgeingStats(ageingDf)
 
     salesDataDict = {
-        "salesData": salesDfCurrentAndPreviousYear,
-        # "salesData": json.loads(json_util.dumps(itemList)),
+        # "salesData": salesDfCurrentAndPreviousYear,
+        "salesData": json.loads(json_util.dumps(salesDfCurrentAndPreviousYear)),
                      "totalSales": getTotalSale(currentMonthYearVsLastMonthYearStats[0]),
                      "salesTarget": getSalesTarget(),
                      "targetAchievement": getTargetAchievement(),
@@ -586,4 +586,4 @@ if __name__ == "__main__":
     #     "expiry_date": expiry
     # }
     # collection_name.insert_one(item_3)
-    # getSaleDataByYearMonthCompanyCode({"year": "2024", "month": "march", "companyCode": "c2002"})
+    getSaleDataByYearMonthCompanyCode({"year": "2024", "month": "march", "companyCode": "c2002"})
