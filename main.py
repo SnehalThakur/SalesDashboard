@@ -1,15 +1,17 @@
 """
 Copyright (c) 2024 - Bizware International
 """
+import csv
 from contextlib import asynccontextmanager
+from io import StringIO
 from typing import Union
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from pydantic import BaseModel
 import uvicorn
-from fastapi import FastAPI, HTTPException, Response, status
+from fastapi import FastAPI, HTTPException, Response, status, UploadFile
 from starlette.responses import JSONResponse
-
+import pandas as pd
 import Pymongodb
 from utils.AWSS3Util import s3_download, s3_download_file
 from bson import json_util
@@ -190,6 +192,23 @@ async def getCustomerAgeingOverviewData():
     return {'output': response}
 
 
+@app.post('/sales-target-upload')
+async def getSalesTargetData(salesTargetFile: UploadFile):
+    startTime_getSalesTargetData = time()
+    salesTargetContents = pd.read_csv(salesTargetFile.file)
+
+    salesTargetContents.to_csv(salesTargetFile.filename, index=False)
+    # salesTargetContentsBytes = await salesTargetFile.read()
+    # with open(salesTargetFile.filename, "wb") as f:
+    #     f.write(salesTargetContentsBytes)
+
+    Pymongodb.salesTargetUploadedData(salesTargetContents)
+    endTime_getSalesTargetData = time()
+    logging.info(
+        "Time taken for getSalesTargetData() {}".format(endTime_getSalesTargetData - startTime_getSalesTargetData))
+    return JSONResponse(content={"message": "File uploaded successfully"}, status_code=200)
+
+
 @app.get('/sales-target-data')
 async def getSalesTargetData():
     startTime_getSalesTargetData = time()
@@ -198,10 +217,15 @@ async def getSalesTargetData():
     # Retrieve a collection named "sales_target_data" from database
     collectionName = dbname["sales_target_data"]
     salesTargetData = Pymongodb.getData(collectionName)
+    # salesTargetDataDf = pd.DataFrame(salesTargetData)
+    # salesTargetDataDf.drop(['_id'], axis=1)
+    # salesTargetData = salesTargetDataDf.to_dict('records')
+    # response = {"salesTargetData": salesTargetData}
     response = json.loads(json_util.dumps(list(salesTargetData)))
     endTime_getSalesTargetData = time()
     logging.info(
         "Time taken for getSalesTargetData() {}".format(endTime_getSalesTargetData - startTime_getSalesTargetData))
+    # return JSONResponse(content=response)
     return {'output': response}
 
 

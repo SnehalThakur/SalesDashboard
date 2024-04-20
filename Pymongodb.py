@@ -334,10 +334,10 @@ def getTotalSale(currentMonthYearVsLastMonthYear):
 
 def getSalesTarget():
     startTime_getSalesTarget = time()
-    salesTarget = {"MoM": "-",
-                   "MoMPct": "-",
-                   "YoY": "-",
-                   "YoYPct": "-"}
+    salesTarget = {"MoM": "0",
+                   "MoMPct": "0",
+                   "YoY": "0",
+                   "YoYPct": "0"}
     endTime_getSalesTarget = time()
     logging.info("Time taken for getSalesTarget() {}".format(endTime_getSalesTarget - startTime_getSalesTarget))
     return salesTarget
@@ -345,10 +345,10 @@ def getSalesTarget():
 
 def getTargetAchievement():
     startTime_getTargetAchievement = time()
-    targetAchievement = {"MoM": "-",
-                         "MoMPct": "-",
-                         "YoY": "-",
-                         "YoYPct": "-"}
+    targetAchievement = {"MoM": "0",
+                         "MoMPct": "0",
+                         "YoY": "0",
+                         "YoYPct": "0"}
     endTime_getTargetAchievement = time()
     logging.info("Time taken for getTargetAchievement() {}".format(
         endTime_getTargetAchievement - startTime_getTargetAchievement))
@@ -370,8 +370,8 @@ def getAccountReceivables(ageingDf):
     startTime_getAccountReceivables = time()
     balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
 
-    accountReceivables = {"accountReceivablesVal": "-",
-                          "accountReceivablesPct": "-"}
+    accountReceivables = {"accountReceivablesVal": "0",
+                          "accountReceivablesPct": "0"}
     endTime_getAccountReceivables = time()
     logging.info("Time taken for getAccountReceivables() {}".format(
         endTime_getAccountReceivables - startTime_getAccountReceivables))
@@ -382,7 +382,7 @@ def getOverdueReceivables(ageingDf):
     startTime_getOverdueReceivables = time()
     balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
     overdueReceivables = {"overdueReceivablesVal": balanceDue,
-                          "overdueReceivablesPct": "-"}
+                          "overdueReceivablesPct": "0"}
     endTime_getOverdueReceivables = time()
     logging.info("Time taken for getOverdueReceivables() {}".format(
         endTime_getOverdueReceivables - startTime_getOverdueReceivables))
@@ -472,15 +472,17 @@ def getSalesDataCurrentAndPreviousYear(salesDf):
 
 def getSaleDataByYearMonthCompanyCode(request):
     startTime_getSaleDataByYearMonthCompanyCode = time()
+    print("request - ", request , "type(request) - ", type(request))
     # {"year": "2024", "month": "march", "companyCode": "c2002"}
     try:
-        year = request['year']
-        month = request['month']
-        companyCode = request['companyCode']
-    except:
         year = request.year
         month = request.month
         companyCode = request.companyCode
+    except:
+        year = request['year']
+        month = request['month']
+        companyCode = request['companyCode']
+
 
     # get database obj
     dbname = get_database()
@@ -545,6 +547,21 @@ def getData(collectionName):
     return itemList
 
 
+def salesTargetUpload(salesTargetDataFile):
+    # salesTargetDataFile = 'SalesEmployeeTargetData.csv'
+    salesTargetDataList = salesTarget.salesTargetFileReaderAndLoader(salesTargetDataFile)
+    sales_target_collection_name = dbname["sales_target_data"]
+    salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
+
+
+def salesTargetUploadedData(salesTargetDataFile):
+    # salesTargetDataFile = 'SalesEmployeeTargetData.csv'
+    dbname = get_database()
+    sales_target_collection_name = dbname["sales_target_data"]
+    salesTargetDataList = salesTarget.salesTargetReaderAndLoader(salesTargetDataFile)
+    salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
+
+
 # This is added so that many files can reuse the function get_database()
 if __name__ == "__main__":
     # Get the database
@@ -570,9 +587,9 @@ if __name__ == "__main__":
     # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
 
     # Sales Target
-    salesTargetDataFile = 'SalesEmployeeTargetData.csv'
-    salesTargetDataList = salesTarget.salesTargetFileReaderAndLoader(salesTargetDataFile)
-    sales_target_collection_name = dbname["sales_target_data"]
+    # salesTargetDataFile = 'SalesEmployeeTargetData.csv'
+    # salesTargetDataList = salesTarget.salesTargetFileReaderAndLoader(salesTargetDataFile)
+    # sales_target_collection_name = dbname["sales_target_data"]
     # salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
 
     # item_details = ageing_collection_name.find()
