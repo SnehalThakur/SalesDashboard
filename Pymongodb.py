@@ -463,16 +463,46 @@ def getTop5Performers(salesDf):
 
 def getSalesDataCurrentAndPreviousYear(salesDf):
     previous_year = current_year - 1
-
     salesDfNew = salesDf[(salesDf.invoiceYear.isin([str(previous_year), str(current_year)]))]
-
     # return salesDfNew
     return salesDfNew.drop(['_id'], axis=1)
 
 
+def getSalesDataByZone(salesDf):
+    salesDf
+
+
+def getSalesTargetDataByZone():
+    # Get the database
+    dbname = get_database()
+    # Retrieve a collection named "sales_target_data" from database
+    collectionName = dbname["sales_target_data"]
+    salesTargetData = collectionName.find()
+    salesTargetDataDf = pd.DataFrame(salesTargetData)
+    salesTargetDf = salesTargetDataDf.drop(['_id'], axis=1)
+    salesTargetDf = salesTargetDf[['Month', 'Year', 'ZONE', 'EmployeeCode', 'EmployeeName',
+       'EmployeeDesignation', 'HODEmpCode', 'HODName', 'Country',
+       'RegionState', 'HQCode', 'City', 'SAPRegion', 'Division', 'MonthlySalesTarget']]
+    salesTargetByYearMonth = salesTargetDf.groupby(['Year', 'Month'])['MonthlySalesTarget'].sum().to_dict()
+    salesTargetByYearMonthList = []
+    for key, val in salesTargetByYearMonth.items():
+        salesTargetByYearMonthDict = {"Year": key[0],
+                           "Month": key[1],
+                           "MonthlySalesTarget": val
+                           }
+        salesTargetByYearMonthList.append(salesTargetByYearMonthDict)
+    salesTargetByZone = salesTargetDf.groupby(['ZONE'])['MonthlySalesTarget'].sum().to_dict()
+    salesTargetDataResponse = {
+        'salesTarget': salesTargetDf.to_dict(orient="records"),
+        'salesTargetByYearMonth': salesTargetByYearMonthList,
+        'salesTargetByZone': salesTargetByZone
+    }
+    return salesTargetDataResponse
+
+
 def getSaleDataByYearMonthCompanyCode(request):
     startTime_getSaleDataByYearMonthCompanyCode = time()
-    print("request - ", request , "type(request) - ", type(request))
+    print("request - ", request, "type(request) - ", type(request))
     # {"year": "2024", "month": "march", "companyCode": "c2002"}
     try:
         year = request.year
@@ -483,13 +513,13 @@ def getSaleDataByYearMonthCompanyCode(request):
         month = request['month']
         companyCode = request['companyCode']
 
-
     # get database obj
     dbname = get_database()
 
     # Retrieve a collection named "sales_data" from database
     collection_name = dbname["sales_data"]
     itemDetails = collection_name.find()
+    # itemDetails = collection_name.find({"year": year, "month": month, "companyCode": companyCode})
 
     # itemList = list(itemDetails)
     salesDf = pd.DataFrame(itemDetails)
@@ -502,7 +532,7 @@ def getSaleDataByYearMonthCompanyCode(request):
     salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
 
     salesDfCurrentAndPreviousYear = getSalesDataCurrentAndPreviousYear(salesDf)
-
+    getSalesDataByZone(salesDfCurrentAndPreviousYear)
     startTime_getIndicatorCurrentMonthYearVsLastMonthYear = time()
     currentMonthYearVsLastMonthYearStats = getIndicatorCurrentMonthYearVsLastMonthYear(salesDf)
     endTime_getIndicatorCurrentMonthYearVsLastMonthYear = time()
@@ -525,10 +555,10 @@ def getSaleDataByYearMonthCompanyCode(request):
         "salesLastYear": getSalesLastYear(currentMonthYearVsLastMonthYearStats[0]),
         "accountReceivables": getAccountReceivables(ageingDf),
         "overdueReceivables": getOverdueReceivables(ageingDf),
-        "topCustomers": getTopCustomers(salesDf),  # list
-        "topProducts": getTopProducts(salesDf),  # list
-        "topDivisions": getTopDivisions(salesDf),  # list
-        "top5Performers": getTop5Performers(salesDf),  # list
+        "topCustomers": getTopCustomers(salesDfCurrentAndPreviousYear),  # list
+        "topProducts": getTopProducts(salesDfCurrentAndPreviousYear),  # list
+        "topDivisions": getTopDivisions(salesDfCurrentAndPreviousYear),  # list
+        "top5Performers": getTop5Performers(salesDfCurrentAndPreviousYear),  # list
         "indicator": currentMonthYearVsLastMonthYearStats  # list
     }
     endTime_getSaleDataByYearMonthCompanyCode = time()
@@ -605,3 +635,4 @@ if __name__ == "__main__":
     # }
     # collection_name.insert_one(item_3)
     # getSaleDataByYearMonthCompanyCode({"year": "2024", "month": "march", "companyCode": "c2002"})
+    # getSalesTargetDataByZone()

@@ -193,40 +193,26 @@ async def getCustomerAgeingOverviewData():
 
 
 @app.post('/sales-target-upload')
-async def getSalesTargetData(salesTargetFile: UploadFile):
+async def salesTargetUpload(salesTargetFile: UploadFile):
     startTime_getSalesTargetData = time()
     salesTargetContents = pd.read_csv(salesTargetFile.file)
-
     salesTargetContents.to_csv(salesTargetFile.filename, index=False)
-    # salesTargetContentsBytes = await salesTargetFile.read()
-    # with open(salesTargetFile.filename, "wb") as f:
-    #     f.write(salesTargetContentsBytes)
-
     Pymongodb.salesTargetUploadedData(salesTargetContents)
     endTime_getSalesTargetData = time()
     logging.info(
-        "Time taken for getSalesTargetData() {}".format(endTime_getSalesTargetData - startTime_getSalesTargetData))
+        "Time taken for salesTargetUpload() {}".format(endTime_getSalesTargetData - startTime_getSalesTargetData))
     return JSONResponse(content={"message": "File uploaded successfully"}, status_code=200)
 
 
 @app.get('/sales-target-data')
 async def getSalesTargetData():
     startTime_getSalesTargetData = time()
-    # Get the database
-    dbname = Pymongodb.get_database()
-    # Retrieve a collection named "sales_target_data" from database
-    collectionName = dbname["sales_target_data"]
-    salesTargetData = Pymongodb.getData(collectionName)
-    # salesTargetDataDf = pd.DataFrame(salesTargetData)
-    # salesTargetDataDf.drop(['_id'], axis=1)
-    # salesTargetData = salesTargetDataDf.to_dict('records')
-    # response = {"salesTargetData": salesTargetData}
-    response = json.loads(json_util.dumps(list(salesTargetData)))
+    salesTargetResponse = Pymongodb.getSalesTargetDataByZone()
     endTime_getSalesTargetData = time()
     logging.info(
         "Time taken for getSalesTargetData() {}".format(endTime_getSalesTargetData - startTime_getSalesTargetData))
-    # return JSONResponse(content=response)
-    return {'output': response}
+    return JSONResponse(content=salesTargetResponse)
+
 
 
 # @app.get('/download')
