@@ -1,6 +1,7 @@
 """
 Copyright (c) 2024 - Bizware International
 """
+import logging
 from typing import Optional, Union, Dict, List
 
 from bson import json_util
@@ -45,7 +46,10 @@ def setSalesTargetData(salesTargetData):
 
 def salesTargetDataLoader(collection_name, salesTargetData):
     # print('Inserting ageing Data to collection {}'.format(collection_name))
-    collection_name.insert_many(salesTargetData)
+    try:
+        collection_name.insert_many(salesTargetData)
+    except:
+        logging.error("Error inserting salesTargetData")
     print('Inserted sales target Data to collection {}'.format(collection_name))
 
 
@@ -62,5 +66,26 @@ def salesTargetFileReaderAndLoader(filename):
     # f.write(str(salesTargetList))
     # f.close()
     # collection_name.insert_many(salesDataList)
+    print('Inserting salesTargetList Done')
+    return salesTargetList
+
+
+def salesTargetReaderAndLoader(salesTargetData):
+    # salesTargetData = pd.read_csv(filename, encoding='cp1252')
+    salesTargetData = salesTargetData.fillna('')
+    salesTargetDataDict = salesTargetData.to_dict(orient='records')
+    salesTargetList = []
+    try:
+        for salesTarget in salesTargetDataDict:
+            salesTargetObj = setSalesTargetData(salesTarget)
+            salesTargetList.append(salesTargetObj)
+        # print('salesTargetList for MongoDB -', salesTargetList)
+        # f = open("salesTargetList.txt", "w")
+        # f.write(str(salesTargetList))
+        # f.close()
+        # collection_name.insert_many(salesDataList)
+    except:
+        logging.error("Error occurred while salesTargetObj mapping")
+
     print('Inserting salesTargetList Done')
     return salesTargetList
