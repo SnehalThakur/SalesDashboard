@@ -165,7 +165,7 @@ def loadSalesData(collection_name, datafile):
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    # collection_name.insert_many(salesDataList)
+    collection_name.insert_many(salesDataList)
     logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -468,8 +468,10 @@ def getSalesDataCurrentAndPreviousYear(salesDf):
     return salesDfNew.drop(['_id'], axis=1)
 
 
-def getSalesDataByZone(salesDf):
-    salesDf
+def getSalesZoneDataBySalesTarget(dbname, salesTargetDf):
+    salesDf = getSaleDataAndTransform(dbname)
+    salesTargetDf
+    salesDf.loc[(salesDf['invoiceMonth'] == salesTargetDf['Month'][0]) & (salesDf['invoiceYear'] == str(salesTargetDf['Year'][0])) & (salesDf['salesEmpolyee']!="")]
 
 
 def getSalesTargetDataByZone():
@@ -481,23 +483,43 @@ def getSalesTargetDataByZone():
     salesTargetDataDf = pd.DataFrame(salesTargetData)
     salesTargetDf = salesTargetDataDf.drop(['_id'], axis=1)
     salesTargetDf = salesTargetDf[['Month', 'Year', 'ZONE', 'EmployeeCode', 'EmployeeName',
-       'EmployeeDesignation', 'HODEmpCode', 'HODName', 'Country',
-       'RegionState', 'HQCode', 'City', 'SAPRegion', 'Division', 'MonthlySalesTarget']]
+                                   'EmployeeDesignation', 'HODEmpCode', 'HODName', 'Country',
+                                   'RegionState', 'HQCode', 'City', 'SAPRegion', 'Division', 'MonthlySalesTarget']]
     salesTargetByYearMonth = salesTargetDf.groupby(['Year', 'Month'])['MonthlySalesTarget'].sum().to_dict()
     salesTargetByYearMonthList = []
     for key, val in salesTargetByYearMonth.items():
         salesTargetByYearMonthDict = {"Year": key[0],
-                           "Month": key[1],
-                           "MonthlySalesTarget": val
-                           }
+                                      "Month": key[1],
+                                      "MonthlySalesTarget": val
+                                      }
         salesTargetByYearMonthList.append(salesTargetByYearMonthDict)
     salesTargetByZone = salesTargetDf.groupby(['ZONE'])['MonthlySalesTarget'].sum().to_dict()
+    # getSalesZoneDataBySalesTarget(dbname, salesTargetDf)
     salesTargetDataResponse = {
         'salesTarget': salesTargetDf.to_dict(orient="records"),
         'salesTargetByYearMonth': salesTargetByYearMonthList,
         'salesTargetByZone': salesTargetByZone
     }
     return salesTargetDataResponse
+
+
+def getSaleDataAndTransform(dbname):
+    # Retrieve a collection named "sales_data" from database
+    collection_name = dbname["sales_data"]
+    itemDetails = collection_name.find()
+    # itemDetails = collection_name.find({"year": year, "month": month, "companyCode": companyCode})
+
+    # itemList = list(itemDetails)
+    salesDf = pd.DataFrame(itemDetails)
+    salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
+    # logging.info("salesDf['invoiceDate'] -"+ salesDf['invoiceDate'])
+    # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
+    salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
+        lambda x: calendar.month_abbr[int(x)]
+    })
+    salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
+
+    return salesDf
 
 
 def getSaleDataByYearMonthCompanyCode(request):
@@ -516,23 +538,9 @@ def getSaleDataByYearMonthCompanyCode(request):
     # get database obj
     dbname = get_database()
 
-    # Retrieve a collection named "sales_data" from database
-    collection_name = dbname["sales_data"]
-    itemDetails = collection_name.find()
-    # itemDetails = collection_name.find({"year": year, "month": month, "companyCode": companyCode})
-
-    # itemList = list(itemDetails)
-    salesDf = pd.DataFrame(itemDetails)
-    salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
-    # logging.info("salesDf['invoiceDate'] -"+ salesDf['invoiceDate'])
-    # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
-    salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
-        lambda x: calendar.month_abbr[int(x)]
-    })
-    salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
+    salesDf = getSaleDataAndTransform(dbname)
 
     salesDfCurrentAndPreviousYear = getSalesDataCurrentAndPreviousYear(salesDf)
-    getSalesDataByZone(salesDfCurrentAndPreviousYear)
     startTime_getIndicatorCurrentMonthYearVsLastMonthYear = time()
     currentMonthYearVsLastMonthYearStats = getIndicatorCurrentMonthYearVsLastMonthYear(salesDf)
     endTime_getIndicatorCurrentMonthYearVsLastMonthYear = time()
@@ -602,18 +610,18 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'Aishwarya_Sales_Data_17-04-24To19-04-24.csv'
+    saleDatafile = 'Aishwarya_Sales_Data_19-04-24To24-04-24'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
-    ageingDataFile = 'Custageingallcompanycode.csv'
-    customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
+    # ageingDataFile = 'Custageingallcompanycode.csv'
+    # customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
 
-    ageing_master_collection_name = dbname["ageing_master_data"]
+    # ageing_master_collection_name = dbname["ageing_master_data"]
     # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
     #
-    ageing_collection_name = dbname["ageing_data"]
+    # ageing_collection_name = dbname["ageing_data"]
     # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
 
     # Sales Target
