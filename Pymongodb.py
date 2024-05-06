@@ -144,7 +144,8 @@ def loadData(collection_name, datafile):
 def sales_update_or_insert_record(collection, salesData):
     for data in salesData:
         # Check if data exists in MongoDB
-        existing_data = collection.find_one({'your_key': data['your_key'], 'key2': data['key2']})  # Replace 'your_key' with the key to check
+        existing_data = collection.find_one(
+            {'your_key': data['your_key'], 'key2': data['key2']})  # Replace 'your_key' with the key to check
         if existing_data:
             # Update the existing record
             collection.update_one({'your_key': data['your_key']}, {'$set': data})
@@ -157,7 +158,8 @@ def sales_update_or_insert_record(collection, salesData):
 
 def sales_ageing_update_or_insert_record(collection, data):
     # Check if data exists in MongoDB
-    existing_data = collection.find_one({'your_key': data['your_key'], 'key2': data['key2']})  # Replace 'your_key' with the key to check
+    existing_data = collection.find_one(
+        {'your_key': data['your_key'], 'key2': data['key2']})  # Replace 'your_key' with the key to check
     if existing_data:
         # Update the existing record
         collection.update_one({'your_key': data['your_key']}, {'$set': data})
@@ -170,7 +172,8 @@ def sales_ageing_update_or_insert_record(collection, data):
 
 def sales_target_update_or_insert_record(collection, data):
     # Check if data exists in MongoDB
-    existing_data = collection.find_one({'your_key': data['your_key'], 'key2': data['key2']})  # Replace 'your_key' with the key to check
+    existing_data = collection.find_one(
+        {'your_key': data['your_key'], 'key2': data['key2']})  # Replace 'your_key' with the key to check
     if existing_data:
         # Update the existing record
         collection.update_one({'your_key': data['your_key']}, {'$set': data})
@@ -206,7 +209,7 @@ def loadSalesData(collection_name, datafile):
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    # collection_name.insert_many(salesDataList)
+    collection_name.insert_many(salesDataList)
     logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -283,7 +286,7 @@ def getCurrentYearSales(salesDf):
         ['invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
     currentYearSalesList = []
     for key, val in currentMonthSales.items():
-        currentYearSalesDict = {"invoiceYear": key[0],
+        currentYearSalesDict = {"invoiceYear": key,
                                 "grandTotal": val
                                 }
         currentYearSalesList.append(currentYearSalesDict)
@@ -300,7 +303,7 @@ def getPreviousYearSales(salesDf):
         ['invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
     previousYearSalesList = []
     for key, val in previousYearSales.items():
-        previousYearSalesDict = {"invoiceYear": key[0],
+        previousYearSalesDict = {"invoiceYear": key,
                                  "grandTotal": val
                                  }
         previousYearSalesList.append(previousYearSalesDict)
@@ -394,7 +397,11 @@ def getIndicatorCurrentMonthYearVsLastMonthYear(salesDf):
 
 def getTotalSale(currentMonthYearVsLastMonthYear):
     startTime_getTotalSale = time()
-    totalSales = {"MoM": currentMonthYearVsLastMonthYear["currentMonthSales"]['grandTotal'],
+    mom = ""
+    if "currentMonthSales" in currentMonthYearVsLastMonthYear:
+        if 'grandTotal' in currentMonthYearVsLastMonthYear["currentMonthSales"]:
+            mom = currentMonthYearVsLastMonthYear["currentMonthSales"]['grandTotal']
+    totalSales = {"MoM": mom,
                   "MoMPct": currentMonthYearVsLastMonthYear["rateChange"],
                   "YoY": currentMonthYearVsLastMonthYear["currentYearSales"]['grandTotal'],
                   "YoYPct": currentMonthYearVsLastMonthYear["rateChangeYear"]}
@@ -534,7 +541,7 @@ def getTop5Performers(salesDf):
 
 def getSalesDataCurrentAndPreviousYear(salesDf):
     previous_year = current_year - 1
-    salesDfNew = salesDf[(salesDf.invoiceYear.isin([str(previous_year), str(current_year)]))]
+    salesDfNew = salesDf[(salesDf.invoiceYear.isin([previous_year, current_year]))]
     # return salesDfNew
     return salesDfNew.drop(['_id'], axis=1)
 
@@ -543,7 +550,8 @@ def getSalesZoneDataBySalesTarget(dbname, salesTargetDf):
     salesDf = getSaleDataAndTransform(dbname)
     # salesTargetDf
     # salesDf = salesDf.loc[(salesDf['invoiceMonth'] == calendar.month_abbr[salesTargetDf['Month'][0]]) & (salesDf['invoiceYear'] == str(salesTargetDf['Year'][0])) & (salesDf['salesEmpolyee']!="")]
-    salesWithTargetDf = pd.merge(salesDf, salesTargetDf, left_on=['invoiceYear', 'invoiceMonth', 'salesEmpolyee'], right_on=['Year', 'targetMonth', 'EmployeeCode'])
+    salesWithTargetDf = pd.merge(salesDf, salesTargetDf, left_on=['invoiceYear', 'invoiceMonth', 'salesEmpolyee'],
+                                 right_on=['Year', 'targetMonth', 'EmployeeCode'])
     salesWithTargetByYearMonthZone = salesWithTargetDf.groupby(['Year', 'Month', 'ZONE'])['grandTotal'].sum().to_dict()
     salesWithTargetByYearMonthZoneList = []
     for key, val in salesWithTargetByYearMonthZone.items():
@@ -573,8 +581,8 @@ def getSalesTargetDataByZone():
     salesTargetByYearList = []
     for key, val in salesTargetByYear.items():
         salesTargetByYearDict = {"Year": key,
-                                  "YearlySalesTarget": val
-                                  }
+                                 "YearlySalesTarget": val
+                                 }
         salesTargetByYearList.append(salesTargetByYearDict)
     # Get Sales Target By Year and Month
     salesTargetByYearMonth = salesTargetDf.groupby(['Year', 'Month'])['MonthlySalesTarget'].sum().to_dict()
@@ -589,10 +597,10 @@ def getSalesTargetDataByZone():
     salesTargetByZoneList = []
     for key, val in salesTargetByYearMonthZone.items():
         salesTargetByZoneDict = {"Year": key[0],
-                                  "Month": key[1],
-                                  "Zone": key[2],
-                                  "MonthlySalesTarget": val,
-                                  }
+                                 "Month": key[1],
+                                 "Zone": key[2],
+                                 "MonthlySalesTarget": val,
+                                 }
         salesTargetByZoneList.append(salesTargetByZoneDict)
     salesDataByZoneList = getSalesZoneDataBySalesTarget(dbname, salesTargetDf)
     salesTargetDataResponse = {

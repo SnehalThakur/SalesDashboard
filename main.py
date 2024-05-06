@@ -214,6 +214,27 @@ async def getSalesTargetData():
     return JSONResponse(content=salesTargetResponse)
 
 
+@app.post('/secondary-sales-upload')
+async def secondarySalesUpload(secondarySalesFile: UploadFile):
+    startTime_getSalesTargetData = time()
+    secondarySalesContents = pd.read_csv(secondarySalesFile.file)
+    secondarySalesContents.to_csv(secondarySalesFile.filename, index=False)
+    Pymongodb.SecondarySalesUploadedData(secondarySalesContents)
+    endTime_getSalesTargetData = time()
+    logging.info(
+        "Time taken for salesTargetUpload() {}".format(endTime_getSalesTargetData - startTime_getSalesTargetData))
+    return JSONResponse(content={"message": "File uploaded successfully"}, status_code=200)
+
+
+@app.get('/secondary-sales-data')
+async def getSecondarySalesData():
+    startTime_getSecondarySalesData = time()
+    secondarySalesResponse = Pymongodb.getSecondarySalesDataByZone()
+    endTime_getSecondarySalesData = time()
+    logging.info(
+        "Time taken for getSecondarySalesData() {}".format(endTime_getSecondarySalesData - startTime_getSecondarySalesData))
+    return JSONResponse(content=secondarySalesResponse)
+
 
 # @app.get('/download')
 # async def download(file_name: str):
