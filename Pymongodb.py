@@ -9,6 +9,7 @@ import pandas as pd
 import model.Sales as sales
 import model.CustomerAgeing as ageing
 import model.SalesTarget as salesTarget
+import model.SecondarySales as secondarySales
 # importing date class from datetime module
 from datetime import date, datetime, timedelta
 import calendar
@@ -140,6 +141,46 @@ def loadData(collection_name, datafile):
 #     FreightPON,SalesEmply,HQCode,HospName
 
 
+def sales_update_or_insert_record(collection, salesData):
+    for data in salesData:
+        # Check if data exists in MongoDB
+        existing_data = collection.find_one({'your_key': data['your_key'], 'key2': data['key2']})  # Replace 'your_key' with the key to check
+        if existing_data:
+            # Update the existing record
+            collection.update_one({'your_key': data['your_key']}, {'$set': data})
+            print("Record updated successfully.")
+        else:
+            # Insert a new record
+            collection.insert_one(data)
+            print("Record inserted successfully.")
+
+
+def sales_ageing_update_or_insert_record(collection, data):
+    # Check if data exists in MongoDB
+    existing_data = collection.find_one({'your_key': data['your_key'], 'key2': data['key2']})  # Replace 'your_key' with the key to check
+    if existing_data:
+        # Update the existing record
+        collection.update_one({'your_key': data['your_key']}, {'$set': data})
+        print("Record updated successfully.")
+    else:
+        # Insert a new record
+        collection.insert_one(data)
+        print("Record inserted successfully.")
+
+
+def sales_target_update_or_insert_record(collection, data):
+    # Check if data exists in MongoDB
+    existing_data = collection.find_one({'your_key': data['your_key'], 'key2': data['key2']})  # Replace 'your_key' with the key to check
+    if existing_data:
+        # Update the existing record
+        collection.update_one({'your_key': data['your_key']}, {'$set': data})
+        print("Record updated successfully.")
+    else:
+        # Insert a new record
+        collection.insert_one(data)
+        print("Record inserted successfully.")
+
+
 # Load sales data
 def loadSalesData(collection_name, datafile):
     data = pd.read_csv(datafile, encoding='cp1252')
@@ -165,7 +206,37 @@ def loadSalesData(collection_name, datafile):
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    collection_name.insert_many(salesDataList)
+    # collection_name.insert_many(salesDataList)
+    logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
+    return salesDataList
+
+
+# Load sales data
+def loadSalesDataWithDelimiter(collection_name, datafile):
+    data = pd.read_csv(datafile, encoding='cp1252', delimiter=';')
+    salesColumns = data[
+        ['CompCode', 'Invno.', 'InvDate', 'BillingTyp', 'Plant', 'PlantName', 'Division',
+         'DivDiscri', 'Bill2Party', 'Bil2PrtNme', 'BillStatCd', 'BillStatNm', 'Bill2Distc', 'Ship2Party', 'ShpPrtyNm',
+         'ItemCode', 'ItemDes', 'HSNCode', 'BatchNo', 'UOM', 'BatchQnt', 'NetAmt',
+         'TAmtAftTax', 'GrandTotal', 'DistrnChnl', 'SalesEmply', 'HQCode']]
+
+    salesColumns['CompanyName'] = salesColumns['CompCode'].map(sales.companyDict)
+
+    salesColumns[
+        ['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode', 'DistrnChnl',
+         'Bill2Party']] = \
+        salesColumns[['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode',
+                      'DistrnChnl', 'Bill2Party']].fillna(0)
+    salesColumns = salesColumns.fillna('')
+    salesColumns = salesColumns.to_dict(orient='records')
+    salesDataList = []
+    for sale in salesColumns:
+        salesObj = sales.setSalesData(sale)
+        salesDataList.append(salesObj)
+    # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
+    f = open("salesData.txt", "w")
+    f.close()
+    # collection_name.insert_many(salesDataList)
     logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -452,7 +523,7 @@ def getTop5Performers(salesDf):
     startTime_getTop5Performers = time()
     # top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum()
     top5PerformersGroupBySalesEmployeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum().sort_values(
-        ascending=False).head(5).to_dict()
+        ascending=False).head(10).to_dict()
     logging.info("Get Grand Total sum of the grouped data by salesEmpolyee : ",
                  top5PerformersGroupBySalesEmployeeGrandTotalSum)
     endTime_getTop5Performers = time()
@@ -470,8 +541,19 @@ def getSalesDataCurrentAndPreviousYear(salesDf):
 
 def getSalesZoneDataBySalesTarget(dbname, salesTargetDf):
     salesDf = getSaleDataAndTransform(dbname)
-    salesTargetDf
-    salesDf.loc[(salesDf['invoiceMonth'] == salesTargetDf['Month'][0]) & (salesDf['invoiceYear'] == str(salesTargetDf['Year'][0])) & (salesDf['salesEmpolyee']!="")]
+    # salesTargetDf
+    # salesDf = salesDf.loc[(salesDf['invoiceMonth'] == calendar.month_abbr[salesTargetDf['Month'][0]]) & (salesDf['invoiceYear'] == str(salesTargetDf['Year'][0])) & (salesDf['salesEmpolyee']!="")]
+    salesWithTargetDf = pd.merge(salesDf, salesTargetDf, left_on=['invoiceYear', 'invoiceMonth', 'salesEmpolyee'], right_on=['Year', 'targetMonth', 'EmployeeCode'])
+    salesWithTargetByYearMonthZone = salesWithTargetDf.groupby(['Year', 'Month', 'ZONE'])['grandTotal'].sum().to_dict()
+    salesWithTargetByYearMonthZoneList = []
+    for key, val in salesWithTargetByYearMonthZone.items():
+        salesWithTargetByYearMonthZoneDict = {"Year": key[0],
+                                              "Month": key[1],
+                                              "Zone": key[2],
+                                              "grandTotal": val,
+                                              }
+        salesWithTargetByYearMonthZoneList.append(salesWithTargetByYearMonthZoneDict)
+    return salesWithTargetByYearMonthZoneList
 
 
 def getSalesTargetDataByZone():
@@ -485,6 +567,16 @@ def getSalesTargetDataByZone():
     salesTargetDf = salesTargetDf[['Month', 'Year', 'ZONE', 'EmployeeCode', 'EmployeeName',
                                    'EmployeeDesignation', 'HODEmpCode', 'HODName', 'Country',
                                    'RegionState', 'HQCode', 'City', 'SAPRegion', 'Division', 'MonthlySalesTarget']]
+    salesTargetDf['targetMonth'] = salesTargetDf['Month'].apply({lambda x: calendar.month_abbr[int(x)]})
+    # Get Sales Target By Year
+    salesTargetByYear = salesTargetDf.groupby(['Year'])['MonthlySalesTarget'].sum().to_dict()
+    salesTargetByYearList = []
+    for key, val in salesTargetByYear.items():
+        salesTargetByYearDict = {"Year": key,
+                                  "YearlySalesTarget": val
+                                  }
+        salesTargetByYearList.append(salesTargetByYearDict)
+    # Get Sales Target By Year and Month
     salesTargetByYearMonth = salesTargetDf.groupby(['Year', 'Month'])['MonthlySalesTarget'].sum().to_dict()
     salesTargetByYearMonthList = []
     for key, val in salesTargetByYearMonth.items():
@@ -493,12 +585,22 @@ def getSalesTargetDataByZone():
                                       "MonthlySalesTarget": val
                                       }
         salesTargetByYearMonthList.append(salesTargetByYearMonthDict)
-    salesTargetByZone = salesTargetDf.groupby(['ZONE'])['MonthlySalesTarget'].sum().to_dict()
-    # getSalesZoneDataBySalesTarget(dbname, salesTargetDf)
+    salesTargetByYearMonthZone = salesTargetDf.groupby(['Year', 'Month', 'ZONE'])['MonthlySalesTarget'].sum().to_dict()
+    salesTargetByZoneList = []
+    for key, val in salesTargetByYearMonthZone.items():
+        salesTargetByZoneDict = {"Year": key[0],
+                                  "Month": key[1],
+                                  "Zone": key[2],
+                                  "MonthlySalesTarget": val,
+                                  }
+        salesTargetByZoneList.append(salesTargetByZoneDict)
+    salesDataByZoneList = getSalesZoneDataBySalesTarget(dbname, salesTargetDf)
     salesTargetDataResponse = {
         'salesTarget': salesTargetDf.to_dict(orient="records"),
+        'salesTargetByYear': salesTargetByYearList,
         'salesTargetByYearMonth': salesTargetByYearMonthList,
-        'salesTargetByZone': salesTargetByZone
+        'salesTargetByYearMonthZone': salesTargetByZoneList,
+        'salesDataByYearMonthZone': salesDataByZoneList
     }
     return salesTargetDataResponse
 
@@ -517,7 +619,7 @@ def getSaleDataAndTransform(dbname):
     salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
         lambda x: calendar.month_abbr[int(x)]
     })
-    salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2]
+    salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2].astype('int64')
 
     return salesDf
 
@@ -600,6 +702,30 @@ def salesTargetUploadedData(salesTargetDataFile):
     salesTarget.salesTargetDataLoader(sales_target_collection_name, salesTargetDataList)
 
 
+def SecondarySalesUploadedData(secondarySalesDataFile):
+    # salesTargetDataFile = 'SalesEmployeeTargetData.csv'
+    dbname = get_database()
+    secondary_sales_collection_name = dbname["secondary_sales_data"]
+    secondarySalesDataList = secondarySales.secondarySalesReaderAndLoader(secondarySalesDataFile)
+    secondarySales.salesTargetDataLoader(secondary_sales_collection_name, secondarySalesDataList)
+
+
+def getSecondarySalesDataByZone():
+    # Get the database
+    dbname = get_database()
+    # Retrieve a collection named "sales_target_data" from database
+    collectionName = dbname["secondary_sales_data"]
+    secondarySalesData = collectionName.find()
+    secondarySalesDataDf = pd.DataFrame(secondarySalesData)
+    secondarySalesDf = secondarySalesDataDf.drop(['_id'], axis=1)
+    secondarySalesDf['secondarySalesMonth'] = secondarySalesDf['Month'].apply({lambda x: calendar.month_abbr[int(x)]})
+
+    secondarySalesDataResponse = {
+        'secondarySales': secondarySalesDf.to_dict(orient="records")
+    }
+    return secondarySalesDataResponse
+
+
 # This is added so that many files can reuse the function get_database()
 if __name__ == "__main__":
     # Get the database
@@ -610,7 +736,7 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'aishwarya25-26april.csv'
+    saleDatafile = 'aishwarya_26_To_3May.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
@@ -643,4 +769,4 @@ if __name__ == "__main__":
     # }
     # collection_name.insert_one(item_3)
     # getSaleDataByYearMonthCompanyCode({"year": "2024", "month": "march", "companyCode": "c2002"})
-    # getSalesTargetDataByZone()
+    getSalesTargetDataByZone()
