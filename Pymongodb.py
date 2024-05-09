@@ -744,7 +744,7 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'aishwarya_26_To_3May.csv'
+    saleDatafile = 'Aishwarya-Sales_Data_03-05_to_06-05.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
