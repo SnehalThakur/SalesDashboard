@@ -447,12 +447,13 @@ def getSalesLastYear(currentMonthYearVsLastMonthYear):
 def getAccountReceivables(ageingDf):
     startTime_getAccountReceivables = time()
 
-    ageingDf['Amount Receivables'] = ageingDf['Due Amount'] + ageingDf['Overdue Amount']
+    # ageingDf['Amount Receivables'] = ageingDf['Due Amount'] + ageingDf['Overdue Amount']
 
     # ageingDf['Overdue Receivables(cr)'] = ageingDf['Overdue Amount']
     # ageingOverdueReceivablesPct = (ageingDf['Overdue Receivables'].sum() / ageingDf['Account Receivables'].sum()) * 100
 
-    accountReceivables = {"accountReceivablesVal": ageingDf['Amount Receivables'].sum(),
+    # accountReceivables = {"accountReceivablesVal": ageingDf['Amount Receivables'].sum(),
+    accountReceivables = {"accountReceivablesVal": "0",
                           "accountReceivablesPct": "0"}
     endTime_getAccountReceivables = time()
     logging.info("Time taken for getAccountReceivables() {}".format(
@@ -463,14 +464,17 @@ def getAccountReceivables(ageingDf):
 def getOverdueReceivables(ageingDf):
     startTime_getOverdueReceivables = time()
 
-    amountReceivables = ageingDf['Due Amount'] + ageingDf['Overdue Amount']
+    # amountReceivables = ageingDf['Due Amount'] + ageingDf['Overdue Amount']
 
-    ageingDf['Overdue Receivables(cr)'] = ageingDf['Overdue Amount']
+    # ageingDf['Overdue Receivables(cr)'] = ageingDf['Overdue Amount']
 
-    ageingOverdueReceivablesPct = (ageingDf['Overdue Amount'].sum() / amountReceivables.sum()) * 100
+    # ageingOverdueReceivablesPct = (ageingDf['Overdue Amount'].sum() / amountReceivables.sum()) * 100
 
-    overdueReceivables = {"overdueReceivablesVal": ageingDf['Overdue Amount'].sum(),
-                          "overdueReceivablesPct": ageingOverdueReceivablesPct}
+    # overdueReceivables = {"overdueReceivablesVal": ageingDf['Overdue Amount'].sum(),
+    #                       "overdueReceivablesPct": ageingOverdueReceivablesPct}
+    # 
+    overdueReceivables = {"overdueReceivablesVal": "0",
+                          "overdueReceivablesPct": "0"}
     endTime_getOverdueReceivables = time()
     logging.info("Time taken for getOverdueReceivables() {}".format(
         endTime_getOverdueReceivables - startTime_getOverdueReceivables))
