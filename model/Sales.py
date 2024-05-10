@@ -65,6 +65,7 @@ class Sales(BaseModel):
     model_config = ConfigDict(coerce_numbers_to_str=True)
 
     invoiceNumber: int = Field(..., alias='Invno.')
+    billingType: str = Field(..., alias='BillingTyp')
     invoiceDate: str = Field(..., alias='InvDate')
     companyCode: int = Field(..., alias='CompCode')
     companyName: str = Field(..., alias='CompanyName')
@@ -76,7 +77,6 @@ class Sales(BaseModel):
     billToPartName: str = Field(..., alias='Bil2PrtNme')
     billToStateCode: str = Field(..., alias='BillStatCd', nullable=True)
     billToStateName: str = Field(..., alias='BillStatNm', nullable=True)
-    billingType: str = Field(..., alias='BillingTyp')
     # shipToDistrict: str = Field(..., alias='Shp2Dist')
     # shipToCity: str = Field(..., alias='Shp2City')
     shipToParty: int = Field(..., alias='Ship2Party')
@@ -90,30 +90,15 @@ class Sales(BaseModel):
     netAmount: str = Field(..., alias='NetAmt')
     totalAmtAfterTax: str = Field(..., alias='TAmtAftTax')
     grandTotal: str = Field(..., alias='GrandTotal')
-    distributionChannel: int = Field(..., alias='DistrnChnl')
+    distributionChannel: str = Field(..., alias='DistrnChnl')
     salesEmpolyee: str = Field(..., alias='SalesEmply')
     hqCode: str = Field(..., alias='HQCode')
+    # timestmp: str = Field(..., alias='Timestmp', nullable=True)
+    # status: str = Field(..., alias='Status', nullable=True)
 
 
 
 # Month	Year	ZONE	Employee Code	Employee Name	Employee Designation	HOD Emp code	HOD Name	Country	Region/State	HQ	HQ Code	City	Division	Monthly sales Target
-
-class SecondarySales(BaseModel):
-    month: str = Field(..., alias='Month')
-    year: str = Field(..., alias='Year')
-    zone: str = Field(..., alias='ZONE')
-    employeeCode: str = Field(..., alias='Employee Code')
-    employeeName: str = Field(..., alias='Employee Name')
-    employeeDesignation: str = Field(..., alias='Employee Designation')
-    hodEmployeeCode: str = Field(..., alias='HOD Emp code')
-    hodName: str = Field(..., alias='HOD Name')
-    country: str = Field(..., alias='Country')
-    regionState: str = Field(..., alias='Region/State')
-    hq: str = Field(..., alias='HQ')
-    hqCode: str = Field(..., alias='HQ Code')
-    city: str = Field(..., alias='City')
-    division: str = Field(..., alias='Division')
-    monthlySalesTarget: str = Field(..., alias='Monthly sales Target')
 
 
 # {"salesData": SalesResponse, "year": SalesRequest.year, "month": SalesRequest.month, "companyCode": SalesRequest.companyCode,
