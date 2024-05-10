@@ -446,9 +446,13 @@ def getSalesLastYear(currentMonthYearVsLastMonthYear):
 
 def getAccountReceivables(ageingDf):
     startTime_getAccountReceivables = time()
-    balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
 
-    accountReceivables = {"accountReceivablesVal": "0",
+    ageingDf['Amount Receivables'] = ageingDf['Due Amount'] + ageingDf['Overdue Amount']
+
+    # ageingDf['Overdue Receivables(cr)'] = ageingDf['Overdue Amount']
+    # ageingOverdueReceivablesPct = (ageingDf['Overdue Receivables'].sum() / ageingDf['Account Receivables'].sum()) * 100
+
+    accountReceivables = {"accountReceivablesVal": ageingDf['Amount Receivables'].sum(),
                           "accountReceivablesPct": "0"}
     endTime_getAccountReceivables = time()
     logging.info("Time taken for getAccountReceivables() {}".format(
@@ -458,9 +462,15 @@ def getAccountReceivables(ageingDf):
 
 def getOverdueReceivables(ageingDf):
     startTime_getOverdueReceivables = time()
-    balanceDue = ageingDf['balanceDue'].str.replace(',', '').astype('float64').sum()
-    overdueReceivables = {"overdueReceivablesVal": balanceDue,
-                          "overdueReceivablesPct": "0"}
+
+    amountReceivables = ageingDf['Due Amount'] + ageingDf['Overdue Amount']
+
+    ageingDf['Overdue Receivables(cr)'] = ageingDf['Overdue Amount']
+
+    ageingOverdueReceivablesPct = (ageingDf['Overdue Amount'].sum() / amountReceivables.sum()) * 100
+
+    overdueReceivables = {"overdueReceivablesVal": ageingDf['Overdue Amount'].sum(),
+                          "overdueReceivablesPct": ageingOverdueReceivablesPct}
     endTime_getOverdueReceivables = time()
     logging.info("Time taken for getOverdueReceivables() {}".format(
         endTime_getOverdueReceivables - startTime_getOverdueReceivables))
@@ -695,6 +705,30 @@ def getData(collectionName):
     return itemList
 
 
+def getAgeingData(collectionName):
+    itemDetails = collectionName.find()
+    # itemList = list(itemDetails)
+    ageingDf = pd.DataFrame(itemDetails)
+    ageingDf = ageingDf.drop(['_id'], axis=1)
+    ageingDf['dueMonth'] = ageingDf['dueDate'].str.split("-", expand=True)[1].apply({
+        lambda x: calendar.month_abbr[int(x)] if x is not None else x
+    })
+    ageingDf['dueYear'] = ageingDf['dueDate'].str.split("-", expand=True)[2].fillna(0).astype('int64')
+    ageingDf['Amount Receivables'] = ageingDf['Due Amount'] + ageingDf['Overdue Amount']
+
+    ageingDf['Overdue Receivables(cr)'] = ageingDf['Overdue Amount']
+
+    ageingOverdueReceivablesPct = (ageingDf['Overdue Receivables'].sum() / ageingDf['Account Receivables'].sum()) * 100
+
+    ageingDataDict = {
+        "ageingData": ageingDf.to_dict('records'),
+        "amountReceivables": ageingDf['Amount Receivables'].sum(),
+        "overdueReceivables": ageingDf['Overdue Receivables(cr)'].sum(),
+        "overdueReceivablesPct": ageingOverdueReceivablesPct
+    }
+    return ageingDataDict
+
+
 def salesTargetUpload(salesTargetDataFile):
     # salesTargetDataFile = 'SalesEmployeeTargetData.csv'
     salesTargetDataList = salesTarget.salesTargetFileReaderAndLoader(salesTargetDataFile)
@@ -744,7 +778,7 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'Aishwarya-Sales_Data_03-05_to_06-05.csv'
+    saleDatafile = 'Aishwarya_Sales_Report_03-05-24till09-05-2024.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
@@ -777,4 +811,4 @@ if __name__ == "__main__":
     # }
     # collection_name.insert_one(item_3)
     # getSaleDataByYearMonthCompanyCode({"year": "2024", "month": "march", "companyCode": "c2002"})
-    getSalesTargetDataByZone()
+    # getSalesTargetDataByZone()
