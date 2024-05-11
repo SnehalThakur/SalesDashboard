@@ -176,6 +176,20 @@ async def getCustomerAgeingData():
     return {'output': response}
 
 
+@app.get('/customer-ageing-stats')
+async def getCustomerAgeingData():
+    startTime_getCustomerAgeingData = time()
+    # Get the database
+    dbname = Pymongodb.get_database()
+    # Retrieve a collection named "ageing_data" from database
+    collectionName = dbname["ageing_data"]
+    ageingDataStatsResponse = Pymongodb.getAgeingData(collectionName)
+
+    endTime_getCustomerAgeingData = time()
+    logging.info("Time taken for getCustomerAgeingData() {}".format(endTime_getCustomerAgeingData - startTime_getCustomerAgeingData))
+    return JSONResponse(content=ageingDataStatsResponse)
+
+
 @app.get('/customer-ageing-overview-data')
 async def getCustomerAgeingOverviewData():
     startTime_getCustomerAgeingOverviewData = time()

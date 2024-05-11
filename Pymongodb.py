@@ -209,7 +209,7 @@ def loadSalesData(collection_name, datafile):
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    collection_name.insert_many(salesDataList)
+    # collection_name.insert_many(salesDataList)
     logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -282,10 +282,10 @@ def getPreviousMonthSales(salesDf):
 
 def getCurrentYearSales(salesDf):
     startTime_CurrentYearSales = time()
-    currentMonthSales = salesDf[salesDf["invoiceYear"].astype(int) == current_year].groupby(
+    currentYearSales = salesDf[salesDf["invoiceYear"].astype(int) == current_year].groupby(
         ['invoiceYear'])['grandTotal'].sum().sort_values().to_dict()
     currentYearSalesList = []
-    for key, val in currentMonthSales.items():
+    for key, val in currentYearSales.items():
         currentYearSalesDict = {"invoiceYear": key,
                                 "grandTotal": val
                                 }
@@ -410,23 +410,76 @@ def getTotalSale(currentMonthYearVsLastMonthYear):
     return totalSales
 
 
-def getSalesTarget():
+def getSalesTarget(salesTargetDf):
     startTime_getSalesTarget = time()
-    salesTarget = {"MoM": "0",
-                   "MoMPct": "0",
-                   "YoY": "0",
-                   "YoYPct": "0"}
+    currentMonthSalesTarget = salesTargetDf[(salesTargetDf["Year"].astype(int) == current_year) & (
+            salesTargetDf["Month"] == current_month)].groupby(
+        ['Month', 'Year'])['MonthlySalesTarget'].sum().sort_values().to_dict()
+    currentMonthSalesTargetVal = 0
+    for key, val in currentMonthSalesTarget.items():
+        currentMonthSalesTargetVal = val
+
+    previousMonthSalesTarget = salesTargetDf[(salesTargetDf["Year"].astype(int) == current_year) & (
+            salesTargetDf["Month"] == previous_month)].groupby(
+        ['Month', 'Year'])['MonthlySalesTarget'].sum().sort_values().to_dict()
+    previousMonthSalesTargetVal = 0
+    for key, val in previousMonthSalesTarget.items():
+        previousMonthSalesTargetVal = val
+
+    rateChangeInPercentMonthly = round((currentMonthSalesTargetVal - previousMonthSalesTargetVal) * 100 / previousMonthSalesTargetVal,
+                                3)
+
+    currentYearSalesTarget = salesTargetDf[salesTargetDf["Year"].astype(int) == current_year].groupby(
+        ['Year'])['MonthlySalesTarget'].sum().sort_values().to_dict()
+
+    previousYear = current_year - 1
+    previousYearSalesTarget = salesTargetDf[salesTargetDf["Year"].astype(int) == previousYear].groupby(
+        ['Year'])['MonthlySalesTarget'].sum().sort_values().to_dict()
+
+    if len(previousYearSalesTarget) > 0:
+        previousYearSalesTargetVal = previousYearSalesTarget[previousYear]
+        rateChangeInPercentYearly = round(
+            (currentYearSalesTarget[current_year] - previousYearSalesTargetVal) * 100 / previousYearSalesTargetVal, 3)
+    else:
+        rateChangeInPercentYearly = 100
+
+
+    # currentMonthSalesList = []
+    # for key, val in currentMonthSales.items():
+    #     currentMonthSalesDict = {"invoiceMonth": key[0],
+    #                              "invoiceYear": key[1],
+    #                              "grandTotal": val
+    #                              }
+    #     currentMonthSalesList.append(currentMonthSalesDict)
+
+    salesTarget = {"MoM": currentMonthSalesTargetVal,
+                   "MoMPct": rateChangeInPercentMonthly,
+                   "YoY": currentYearSalesTarget[current_year],
+                   "YoYPct": rateChangeInPercentYearly}
     endTime_getSalesTarget = time()
     logging.info("Time taken for getSalesTarget() {}".format(endTime_getSalesTarget - startTime_getSalesTarget))
     return salesTarget
 
 
-def getTargetAchievement():
+def getTargetAchievement(salesDf, salesTargetStats):
+    currentMonthYearVsLastMonthYearStats = getIndicatorCurrentMonthYearVsLastMonthYear(salesDf)
+    currentMonthSales = currentMonthYearVsLastMonthYearStats[0]['currentMonthSales']['grandTotal']
+    previousMonthSales = currentMonthYearVsLastMonthYearStats[0]['previousMonthSales']['grandTotal']
+    currentYearSales = currentMonthYearVsLastMonthYearStats[0]['currentYearSales']['grandTotal']
+    previousYearSales = currentMonthYearVsLastMonthYearStats[0]['previousYearSales']['grandTotal']
+    rateChangeMonthly = currentMonthYearVsLastMonthYearStats[0]['rateChange']
+    rateChangeYearly = currentMonthYearVsLastMonthYearStats[0]['rateChangeYear']
+
+    currentMonthSalesTarget = salesTargetStats['MoM']
+    rateChangeMonthlySalesTarget = salesTargetStats['MoMPct']
+    currentYearSalesTarget = salesTargetStats['YoY']
+    rateChangeYearlySalesTarget = salesTargetStats['YoYPct']
+
     startTime_getTargetAchievement = time()
-    targetAchievement = {"MoM": "0",
-                         "MoMPct": "0",
-                         "YoY": "0",
-                         "YoYPct": "0"}
+    targetAchievement = {"MoM": currentMonthSalesTarget - currentMonthSales,
+                         "MoMPct": rateChangeMonthlySalesTarget - rateChangeMonthly,
+                         "YoY": currentYearSalesTarget - currentYearSales,
+                         "YoYPct": rateChangeYearlySalesTarget - rateChangeYearly}
     endTime_getTargetAchievement = time()
     logging.info("Time taken for getTargetAchievement() {}".format(
         endTime_getTargetAchievement - startTime_getTargetAchievement))
@@ -472,7 +525,7 @@ def getOverdueReceivables(ageingDf):
 
     # overdueReceivables = {"overdueReceivablesVal": ageingDf['Overdue Amount'].sum(),
     #                       "overdueReceivablesPct": ageingOverdueReceivablesPct}
-    # 
+    #
     overdueReceivables = {"overdueReceivablesVal": "0",
                           "overdueReceivablesPct": "0"}
     endTime_getOverdueReceivables = time()
@@ -560,13 +613,13 @@ def getSalesDataCurrentAndPreviousYear(salesDf):
     return salesDfNew.drop(['_id'], axis=1)
 
 
-def getSalesZoneDataBySalesTarget(dbname, salesTargetDf):
-    salesDf = getSaleDataAndTransform(dbname)
+def getSalesZoneDataBySalesTarget(salesDf, salesTargetDf):
     # salesTargetDf
     # salesDf = salesDf.loc[(salesDf['invoiceMonth'] == calendar.month_abbr[salesTargetDf['Month'][0]]) & (salesDf['invoiceYear'] == str(salesTargetDf['Year'][0])) & (salesDf['salesEmpolyee']!="")]
     salesWithTargetDf = pd.merge(salesDf, salesTargetDf, left_on=['invoiceYear', 'invoiceMonth', 'salesEmpolyee'],
                                  right_on=['Year', 'targetMonth', 'EmployeeCode'])
     salesWithTargetByYearMonthZone = salesWithTargetDf.groupby(['Year', 'Month', 'ZONE'])['grandTotal'].sum().to_dict()
+
     salesWithTargetByYearMonthZoneList = []
     for key, val in salesWithTargetByYearMonthZone.items():
         salesWithTargetByYearMonthZoneDict = {"Year": key[0],
@@ -616,13 +669,20 @@ def getSalesTargetDataByZone():
                                  "MonthlySalesTarget": val,
                                  }
         salesTargetByZoneList.append(salesTargetByZoneDict)
-    salesDataByZoneList = getSalesZoneDataBySalesTarget(dbname, salesTargetDf)
+
+    salesDf = getSaleDataAndTransform(dbname)
+    salesDataByZoneList = getSalesZoneDataBySalesTarget(salesDf, salesTargetDf)
+
+    salesTargetStats = getSalesTarget(salesTargetDf)
+
     salesTargetDataResponse = {
         'salesTarget': salesTargetDf.to_dict(orient="records"),
         'salesTargetByYear': salesTargetByYearList,
         'salesTargetByYearMonth': salesTargetByYearMonthList,
         'salesTargetByYearMonthZone': salesTargetByZoneList,
-        'salesDataByYearMonthZone': salesDataByZoneList
+        'salesDataByYearMonthZone': salesDataByZoneList,
+        "salesTargetStats": salesTargetStats,
+        "targetAchievementStats": getTargetAchievement(salesDf, salesTargetStats),
     }
     return salesTargetDataResponse
 
@@ -638,10 +698,16 @@ def getSaleDataAndTransform(dbname):
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
     # logging.info("salesDf['invoiceDate'] -"+ salesDf['invoiceDate'])
     # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
-    salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
-        lambda x: calendar.month_abbr[int(x)]
-    })
-    salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2].astype('int64')
+    if "-" in salesDf['invoiceDate'][0]:
+        salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
+            lambda x: calendar.month_abbr[int(x)]
+        })
+        salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2].astype('int64')
+    elif "." in salesDf['invoiceDate'][0]:
+        salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split(".", expand=True)[1].apply({
+            lambda x: calendar.month_abbr[int(x)]
+        })
+        salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split(".", expand=True)[2].astype('int64')
 
     return salesDf
 
@@ -682,8 +748,6 @@ def getSaleDataByYearMonthCompanyCode(request):
         "salesData": salesDfCurrentAndPreviousYear.to_dict('records'),
         # "salesData": json.loads(json_util.dumps(salesDfCurrentAndPreviousYear)),
         "totalSales": getTotalSale(currentMonthYearVsLastMonthYearStats[0]),
-        "salesTarget": getSalesTarget(),
-        "targetAchievement": getTargetAchievement(),
         "salesLastYear": getSalesLastYear(currentMonthYearVsLastMonthYearStats[0]),
         "accountReceivables": getAccountReceivables(ageingDf),
         "overdueReceivables": getOverdueReceivables(ageingDf),
@@ -714,10 +778,16 @@ def getAgeingData(collectionName):
     # itemList = list(itemDetails)
     ageingDf = pd.DataFrame(itemDetails)
     ageingDf = ageingDf.drop(['_id'], axis=1)
-    ageingDf['dueMonth'] = ageingDf['dueDate'].str.split("-", expand=True)[1].apply({
-        lambda x: calendar.month_abbr[int(x)] if x is not None else x
-    })
-    ageingDf['dueYear'] = ageingDf['dueDate'].str.split("-", expand=True)[2].fillna(0).astype('int64')
+    if '-' in ageingDf['dueDate'].str[0]:
+        ageingDf['dueMonth'] = ageingDf['dueDate'].str.split("-", expand=True)[1].apply({
+            lambda x: calendar.month_abbr[int(x)] if x is not None else x
+        })
+        ageingDf['dueYear'] = ageingDf['dueDate'].str.split("-", expand=True)[2].fillna(0).astype('int64')
+    elif '.' in ageingDf['dueDate'].str[0]:
+        ageingDf['dueMonth'] = ageingDf['dueDate'].str.split(".", expand=True)[1].apply({
+            lambda x: calendar.month_abbr[int(x)] if x is not None else x
+        })
+        ageingDf['dueYear'] = ageingDf['dueDate'].str.split(".", expand=True)[2].fillna(0).astype('int64')
     ageingDf['Amount Receivables'] = ageingDf['Due Amount'] + ageingDf['Overdue Amount']
 
     ageingDf['Overdue Receivables(cr)'] = ageingDf['Overdue Amount']
