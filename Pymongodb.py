@@ -778,26 +778,26 @@ def getAgeingData(collectionName):
     # itemList = list(itemDetails)
     ageingDf = pd.DataFrame(itemDetails)
     ageingDf = ageingDf.drop(['_id'], axis=1)
-    if '-' in ageingDf['dueDate'].str[0]:
+    if '-' in ageingDf['dueDate'][0]:
         ageingDf['dueMonth'] = ageingDf['dueDate'].str.split("-", expand=True)[1].apply({
             lambda x: calendar.month_abbr[int(x)] if x is not None else x
         })
         ageingDf['dueYear'] = ageingDf['dueDate'].str.split("-", expand=True)[2].fillna(0).astype('int64')
-    elif '.' in ageingDf['dueDate'].str[0]:
+    elif '.' in ageingDf['dueDate'][0]:
         ageingDf['dueMonth'] = ageingDf['dueDate'].str.split(".", expand=True)[1].apply({
             lambda x: calendar.month_abbr[int(x)] if x is not None else x
         })
         ageingDf['dueYear'] = ageingDf['dueDate'].str.split(".", expand=True)[2].fillna(0).astype('int64')
-    ageingDf['Amount Receivables'] = ageingDf['Due Amount'] + ageingDf['Overdue Amount']
+    ageingDf['amountReceivables'] = ageingDf['dueAmount'].astype('float64') + ageingDf['overdueAmount'].astype('float64')
 
-    ageingDf['Overdue Receivables(cr)'] = ageingDf['Overdue Amount']
+    ageingDf['overdueReceivables'] = ageingDf['overdueAmount'].astype('float64')
 
-    ageingOverdueReceivablesPct = (ageingDf['Overdue Receivables'].sum() / ageingDf['Account Receivables'].sum()) * 100
+    ageingOverdueReceivablesPct = (ageingDf['overdueReceivables'].sum() / ageingDf['amountReceivables'].sum()) * 100
 
     ageingDataDict = {
         "ageingData": ageingDf.to_dict('records'),
-        "amountReceivables": ageingDf['Amount Receivables'].sum(),
-        "overdueReceivables": ageingDf['Overdue Receivables(cr)'].sum(),
+        "amountReceivables": ageingDf['amountReceivables'].sum(),
+        "overdueReceivables": ageingDf['overdueReceivables'].sum(),
         "overdueReceivablesPct": ageingOverdueReceivablesPct
     }
     return ageingDataDict
@@ -857,14 +857,14 @@ if __name__ == "__main__":
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
-    # ageingDataFile = 'Custageingallcompanycode.csv'
-    # customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
+    ageingDataFile = 'CustomerAging.csv'
+    customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
 
-    # ageing_master_collection_name = dbname["ageing_master_data"]
-    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
-    #
-    # ageing_collection_name = dbname["ageing_data"]
-    # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
+    ageing_master_collection_name = dbname["ageing_master_data"]
+    ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
+
+    ageing_collection_name = dbname["ageing_data"]
+    ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
 
     # Sales Target
     # salesTargetDataFile = 'SalesEmployeeTargetData.csv'
