@@ -857,7 +857,7 @@ if __name__ == "__main__":
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
-    ageingDataFile = 'CustomerAging.csv'
+    ageingDataFile = 'latest_cust_aging.csv'
     customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
 
     ageing_master_collection_name = dbname["ageing_master_data"]
