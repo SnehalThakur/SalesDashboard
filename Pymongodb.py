@@ -539,7 +539,8 @@ def getTopCustomers(salesDf):
     topCustomers = []
     # topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToParty', 'billToPartName'])['grandTotal'].sum()
     # topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToPartName'])['grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
-    topCustomersGroupByBillToPartyGrandTotalSum = salesDf.groupby(['billToParty', 'billToPartName'])[
+    topCustomersGroupByBillToPartyGrandTotalSum = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
+            salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby(['billToParty', 'billToPartName'])[
         'grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
     topCustomersList = []
     for key, val in topCustomersGroupByBillToPartyGrandTotalSum.items():
@@ -558,7 +559,8 @@ def getTopProducts(salesDf):
     startTime_getTopProducts = time()
     topProducts = []
     # topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemCode', 'itemDescription'])['grandTotal'].sum()
-    topProductsGroupByItemDesGrandTotalSum = salesDf.groupby(['itemCode', 'itemDescription'])[
+    topProductsGroupByItemDesGrandTotalSum = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
+            salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby(['itemCode', 'itemDescription'])[
         'grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
     topProductsList = []
     for key, val in topProductsGroupByItemDesGrandTotalSum.items():
@@ -577,7 +579,8 @@ def getTopDivisions(salesDf):
     startTime_getTopDivisions = time()
     topDivisions = []
     # topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['division', 'divisionDescription'])['grandTotal'].sum()
-    topDivisionsGroupByItemDesGrandTotalSum = salesDf.groupby(['division', 'divisionDescription'])[
+    topDivisionsGroupByItemDesGrandTotalSum = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
+            salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby(['division', 'divisionDescription'])[
         'grandTotal'].sum().sort_values(ascending=False).head(5).to_dict()
     topDivisionsList = []
     for key, val in topDivisionsGroupByItemDesGrandTotalSum.items():
