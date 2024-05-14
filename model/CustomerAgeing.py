@@ -3,9 +3,14 @@ Copyright (c) 2024 - Bizware International
 """
 
 '''
-Customer Code	Customer Name	Customer Group	Profit Center	Billing Document	Billing Type	Invoice Date	Reference No.	Reference Date
-Document No.	Document Type	Balanace Due	Due Date	Due Days	Not Due	Doubtful Debt	Legal	Sales Group	Sales Organization	Division
-Above 180 Days	000to30Days	31to60Days	61to90Days	91to120Days	121to150Days	151to180Days	Written Off
+CustCode.;Doc. No.;CustName;CustGrp;PrfitCentr;DocumeNo.;DocuType;InvDate;DueDate.;ReferNo;ReferenDt;BalanaDue;DueDays.;DoutfulDeb;
+NotDue;BillinType;SalesGroup;SalesOrga;Division;BillinDocu;0to30Days;31to60Days;61to90Days;91to120Day;121to150Day;151to180Da;
+Abve180Day;Legal;WrittenOff;Due Amount;Overdue Amount;Timestamp;Status
+
+CustCode.;Doc. No.;CustName;CustGrp;PrfitCentr;DocuType;InvDate;DueDate.;ReferNo;ReferenDt;BalanaDue;DueDays.;DoutfulDeb;
+NotDue;BillinType;SalesGroup;SalesOrga;Division;BillinDocu;0to30Days;31to60Days;61to90Days;91to120Day;121to150Day;151to180Da;
+Abve180Day;Legal;WrittenOff;Due Amount;Overdue Amount;Timestamp;Status
+
 '''
 from pydantic import BaseModel, Field, ConfigDict
 import pandas as pd
@@ -18,56 +23,65 @@ companyDict = {
 
 
 class CustomerAgeing(BaseModel):
-    model_config = ConfigDict(coerce_numbers_to_str=True)
-
     customerCode: int = Field(..., alias='CustCode.')
+    documentNumber: str = Field(..., alias='Doc. No.')
     customerName: str = Field(..., alias='CustName')
     customerGroup: str = Field(..., alias='CustGrp')
     profitCenter: str = Field(..., alias='PrfitCentr')
-    billingDocument: int = Field(..., alias='DocumeNo.')
     billingType: str = Field(..., alias='BillinType')
     invoiceDate: str = Field(..., alias='InvDate')
     referenceNumber: str = Field(..., alias='ReferNo')
     referenceDate: str = Field(..., alias='ReferenDt')
-    documentNumber: int = Field(..., alias='DocumeNo.')
     documentType: str = Field(..., alias='DocuType')
     balanceDue: str = Field(..., alias='BalanaDue')
     dueDate: str = Field(..., alias='DueDate.')
-    dueDays: str = Field(..., alias='DueDays.')
-    notDue: int = Field(..., alias='NotDue')
+    dueDays: float = Field(..., alias='DueDays.')
+    notDue: str = Field(..., alias='NotDue')
     doubtfulDebt: str = Field(..., alias='DoutfulDeb')
     legal: str = Field(..., alias='Legal')
     salesGroup: str = Field(..., alias='SalesGroup')
     salesOrganization: float = Field(..., alias='SalesOrga')
-    division: int = Field(..., alias='Division')
+    division: str = Field(..., alias='Division')
     zeroTo30Days: str = Field(..., alias='0to30Days')
     thirtyOneTo60Days: str = Field(..., alias='31to60Days')
     sixtyOneTo90Days: str = Field(..., alias='61to90Days')
     nintyOneTo120Days: str = Field(..., alias='91to120Day')
-    oneTwentyOneTo150Days: str = Field(..., alias='121to150Da')
+    oneTwentyOneTo150Days: str = Field(..., alias='121to150Day')
     oneFiftyoneTo180Days: str = Field(..., alias='151to180Da')
     above180Days: str = Field(..., alias='Abve180Day')
     writtenOff: str = Field(..., alias='WrittenOff')
+    dueAmount: str = Field(..., alias='Due Amount', nullable=True)
+    overdueAmount: str = Field(..., alias='Overdue Amount', nullable=True)
+    # timestamp: str = Field(..., alias='Timestamp', nullable=True)
+    status: str = Field(..., alias='Status', nullable=True)
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
 
 
 class CustomerAgeingReport(BaseModel):
     customerCode: int = Field(..., alias='CustCode.')
+    documentNumber: int = Field(..., alias='Doc. No.')
     customerName: str = Field(..., alias='CustName')
     customerGroup: str = Field(..., alias='CustGrp')
-    billingDocument: int = Field(..., alias='DocumeNo.')
     billingType: str = Field(..., alias='BillinType')
     invoiceDate: str = Field(..., alias='InvDate')
     balanceDue: str = Field(..., alias='BalanaDue')
     dueDate: str = Field(..., alias='DueDate.')
     dueDays: str = Field(..., alias='DueDays.')
-    division: int = Field(..., alias='Division')
+    division: str = Field(..., alias='Division')
     zeroTo30Days: str = Field(..., alias='0to30Days')
     thirtyOneTo60Days: str = Field(..., alias='31to60Days')
     sixtyOneTo90Days: str = Field(..., alias='61to90Days')
     nintyOneTo120Days: str = Field(..., alias='91to120Day')
-    oneTwentyOneTo150Days: str = Field(..., alias='121to150Da')
+    oneTwentyOneTo150Days: str = Field(..., alias='121to150Day')
     oneFiftyoneTo180Days: str = Field(..., alias='151to180Da')
     above180Days: str = Field(..., alias='Abve180Day')
+    dueAmount: str = Field(..., alias='Due Amount', nullable=True)
+    overdueAmount: str = Field(..., alias='Overdue Amount', nullable=True)
+    # timestamp: str = Field(..., alias='Timestamp', nullable=True)
+    status: str = Field(..., alias='Status', nullable=True)
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
 
 
 '''
@@ -145,8 +159,28 @@ def customerAgeingDataLoader(collection_name, ageingData):
     print('Inserted ageing Data to collection {}'.format(collection_name))
 
 
+def amountValueConverter(x):
+    x = str(x).replace(',', '')
+    if "-" in x:
+        x = float(x[:-1])
+        x *= -1
+    return x
+
+
+def balAmountValueConverter(x):
+    x = str(x).split(',')[0]
+    x = x.replace('.', '')
+    if "-" in x:
+        x = float(x[:-1])
+        x *= -1
+    return x
+
+
+#  CustCode.;Doc. No.;CustName;CustGrp;PrfitCentr;DocumeNo.;DocuType;InvDate;DueDate.;ReferNo;ReferenDt;BalanaDue;DueDays.;DoutfulDeb;NotDue;
+#  BillinType;SalesGroup;SalesOrga;Division;BillinDocu;0to30Days;31to60Days;61to90Days;91to120Day;121to150Day;151to180Da;Abve180Day;
+#  Legal;WrittenOff;Due Amount;Overdue Amount;Timestamp;Status
 def customerAgeingFileReaderAndLoader(filename):
-    ageingCompleteData = pd.read_csv(filename, encoding='cp1252')
+    ageingCompleteData = pd.read_csv(filename, encoding='cp1252', delimiter=';')
     ageingCompleteData = ageingCompleteData.fillna('0')
     ageingCompleteDataDict = ageingCompleteData.to_dict(orient='records')
     customerAgeingList = []
@@ -154,10 +188,14 @@ def customerAgeingFileReaderAndLoader(filename):
         customerAgeingObj = setCustomerAgeingData(ageing)
         customerAgeingList.append(customerAgeingObj)
     ageingColumns = ageingCompleteData[
-        ['CustCode.', 'CustName', 'CustGrp', 'DocumeNo.', 'BillinType', 'InvDate',
+        ['CustCode.', 'Doc. No.', 'CustName', 'CustGrp',  'BillinType', 'InvDate',
          'BalanaDue', 'DueDate.', 'DueDays.', 'Division', '0to30Days', '31to60Days',
-         '61to90Days', '91to120Day', '121to150Da', '151to180Da', 'Abve180Day']]
+         '61to90Days', '91to120Day', '121to150Day', '151to180Da', 'Abve180Day', 'Due Amount', 'Overdue Amount', 'Status']]
     ageingColumns = ageingColumns.fillna('')
+    columnsToFormat = ['BalanaDue', '0to30Days', '31to60Days', '61to90Days', '91to120Day', '121to150Day', '151to180Da', 'Abve180Day', 'Due Amount', 'Overdue Amount']
+    for i in columnsToFormat:
+        ageingColumns[i] = ageingColumns[i].apply(lambda x: balAmountValueConverter(x))
+
     ageingColumns = ageingColumns.to_dict(orient='records')
     customerAgeingReportDataList = []
     for ageing in ageingColumns:
