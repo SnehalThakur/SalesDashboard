@@ -599,7 +599,8 @@ def getTopDivisions(salesDf):
 def getTop5Performers(salesDf):
     startTime_getTop5Performers = time()
     # top5PerformersGroupBySalesEmpolyeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum()
-    top5PerformersGroupBySalesEmployeeGrandTotalSum = salesDf.groupby('salesEmpolyee')['grandTotal'].sum().sort_values(
+    top5PerformersGroupBySalesEmployeeGrandTotalSum = salesDf[(salesDf["invoiceYear"].astype(int) == current_year) & (
+            salesDf["invoiceMonth"] == calendar.month_abbr[current_month])].groupby('salesEmpolyee')['grandTotal'].sum().sort_values(
         ascending=False).head(10).to_dict()
     logging.info("Get Grand Total sum of the grouped data by salesEmpolyee : ",
                  top5PerformersGroupBySalesEmployeeGrandTotalSum)
