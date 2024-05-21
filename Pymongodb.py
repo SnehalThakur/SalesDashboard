@@ -209,7 +209,7 @@ def loadSalesData(collection_name, datafile):
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    # collection_name.insert_many(salesDataList)
+    collection_name.insert_many(salesDataList)
     logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -426,8 +426,7 @@ def getSalesTarget(salesTargetDf):
     for key, val in previousMonthSalesTarget.items():
         previousMonthSalesTargetVal = val
 
-    rateChangeInPercentMonthly = round((currentMonthSalesTargetVal - previousMonthSalesTargetVal) * 100 / previousMonthSalesTargetVal,
-                                3)
+    rateChangeInPercentMonthly = round((currentMonthSalesTargetVal - previousMonthSalesTargetVal) * 100 / previousMonthSalesTargetVal, 3)
 
     currentYearSalesTarget = salesTargetDf[salesTargetDf["Year"].astype(int) == current_year].groupby(
         ['Year'])['MonthlySalesTarget'].sum().sort_values().to_dict()
@@ -856,19 +855,19 @@ if __name__ == "__main__":
 
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'Aishwarya_Sales_Report_03-05-24till09-05-2024.csv'
+    saleDatafile = 'zsdlog_13_to_16_may.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
-    ageingDataFile = 'latest_cust_aging.csv'
-    customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
-
-    ageing_master_collection_name = dbname["ageing_master_data"]
-    ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
-
-    ageing_collection_name = dbname["ageing_data"]
-    ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
+    # ageingDataFile = 'latest_cust_aging.csv'
+    # customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
+    #
+    # ageing_master_collection_name = dbname["ageing_master_data"]
+    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
+    #
+    # ageing_collection_name = dbname["ageing_data"]
+    # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
 
     # Sales Target
     # salesTargetDataFile = 'SalesEmployeeTargetData.csv'
