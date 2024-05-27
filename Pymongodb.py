@@ -12,6 +12,7 @@ import model.SalesTarget as salesTarget
 import model.SecondarySales as secondarySales
 # importing date class from datetime module
 from datetime import date, datetime, timedelta
+
 import calendar
 # import motor
 from bson import json_util
@@ -19,6 +20,7 @@ import json
 from time import time
 import getopt, sys
 import logging
+
 
 # creating the logger object
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
@@ -40,6 +42,9 @@ year_entire = todays_date.strftime("%Y")
 # print("Current month:", current_month)
 # print("Current month :", current_month_text)
 # print("Current day:", current_day)
+
+monthDict = {'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 'June': 6, 'July': 7, 'August': 8,
+             'September': 9, 'October': 10, 'November': 11, 'December': 12}
 
 
 # Remove 1st argument from the
@@ -845,6 +850,116 @@ def getSecondarySalesDataByZone():
     return secondarySalesDataResponse
 
 
+def getCurrentMonthSalesData():
+    # Get the database
+    dbname = get_database()
+    # Retrieve a collection named "sales_target_data" from database
+    collection = dbname["sales_data"]
+
+    # Get current month and year
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+
+    # Construct start and end dates for the current month and year
+    start_date = datetime(current_year, current_month, 1)
+    end_date = datetime(current_year if current_month < 12 else current_year + 1, (current_month % 12) + 1, 1)
+
+    # Convert start and end dates to mm-dd-yyyy string format
+    start_date_str = start_date.strftime("%m-%d-%Y")
+    end_date_str = end_date.strftime("%m-%d-%Y")
+
+    # Construct query to retrieve data for the current month and year
+    query = {
+        "invoiceDate": {
+            "$gte": start_date_str,
+            "$lt": end_date_str
+        }
+    }
+
+    # Retrieve data
+    results = collection.find(query)
+
+    # Process retrieved data
+    for result in results:
+        print(result)
+
+
+# def getCalenderMonth():
+#     import calendar
+#     print({month: index for index, month in enumerate(calendar.month_name) if month})
+
+
+def currentMonthDates():
+    # Get current month and year
+    # current_month = datetime.now().month
+    # current_year = datetime.now().year
+
+    # Get the first day of the current month
+    first_day_of_month = datetime(current_year, current_month, 1)
+
+    # Initialize an empty list to store dates
+    dates_of_month = []
+
+    # Loop through each day of the month and add to the list
+    current_date = first_day_of_month
+    while current_date.month == current_month:
+        dates_of_month.append(current_date.strftime("%d-%m-%Y"))
+        current_date += timedelta(days=1)
+
+    # Print the list of dates
+    print(dates_of_month)
+
+    return dates_of_month
+
+
+def currentMonthPreviousYearDates():
+    # Get current month and year
+    # current_month = datetime.now().month
+    # current_year = datetime.now().year
+
+    # Get the first day of the current month
+    first_day_of_month = datetime(current_year - 1, current_month, 1)
+
+    # Initialize an empty list to store dates
+    dates_of_month = []
+
+    # Loop through each day of the month and add to the list
+    current_date = first_day_of_month
+    while current_date.month == current_month:
+        dates_of_month.append(current_date.strftime("%d-%m-%Y"))
+        current_date += timedelta(days=1)
+
+    # Print the list of dates
+    print(dates_of_month)
+
+    return dates_of_month
+
+
+def getCurrentMonthSalesDataByList():
+    # Get the database
+    dbname = get_database()
+    # Retrieve a collection named "sales_target_data" from database
+    collection = dbname["sales_data"]
+    dates = currentMonthDates()
+    previousYearDates = currentMonthPreviousYearDates()
+
+    dates.extend(previousYearDates)
+    query = {
+        "invoiceDate": {
+            "$in": dates
+        }
+    }
+
+    # Retrieve data
+    results = collection.find(query)
+
+    # Process retrieved data
+    for result in results:
+        print(result)
+
+
+
+
 # This is added so that many files can reuse the function get_database()
 if __name__ == "__main__":
     # Get the database
@@ -853,9 +968,11 @@ if __name__ == "__main__":
     # Retrieve a collection named "salesdata" from database
     sales_collection_name = dbname["sales_data"]
 
+    # currentMonthDates()
+    # getCurrentMonthSalesDataByList()
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'zsdlog_17_to_20_may.csv'
+    saleDatafile = 'Aishwarya21to26may.csv'
     loadSalesData(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
