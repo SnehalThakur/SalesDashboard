@@ -189,11 +189,16 @@ def sales_target_update_or_insert_record(collection, data):
         print("Record inserted successfully.")
 
 
+def updateIfExists(sales_collection_name, saleData):
+    sales_collection_name.delete_one({"invoiceNumber": saleData["Invno."], "lineItemNo": saleData["LineItemNo"]})
+    print(f"Record with invoiceNumber {saleData['Invno.']} and lineItemNo {saleData['LineItemNo']} removed.")
+
+
 # Load sales data
 def loadSalesData(collection_name, datafile):
     data = pd.read_csv(datafile, encoding='cp1252')
     salesColumns = data[
-        ['CompCode', 'Invno.', 'InvDate', 'BillingTyp', 'Plant', 'PlantName', 'Division',
+        ['CompCode', 'Invno.', 'InvDate', 'LineItemNo', 'BillingTyp', 'Plant', 'PlantName', 'Division',
          'DivDiscri', 'Bill2Party', 'Bil2PrtNme', 'BillStatCd', 'BillStatNm', 'Bill2Distc', 'Ship2Party', 'ShpPrtyNm',
          'ItemCode', 'ItemDes', 'HSNCode', 'BatchNo', 'UOM', 'BatchQnt', 'NetAmt',
          'TAmtAftTax', 'GrandTotal', 'DistrnChnl', 'SalesEmply', 'HQCode']]
@@ -209,6 +214,7 @@ def loadSalesData(collection_name, datafile):
     salesColumns = salesColumns.to_dict(orient='records')
     salesDataList = []
     for sale in salesColumns:
+        updateIfExists(sales_collection_name, sale)
         salesObj = sales.setSalesData(sale)
         salesDataList.append(salesObj)
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
@@ -223,7 +229,7 @@ def loadSalesData(collection_name, datafile):
 def loadSalesDataWithDelimiter(collection_name, datafile):
     data = pd.read_csv(datafile, encoding='cp1252', delimiter=';')
     salesColumns = data[
-        ['CompCode', 'Invno.', 'InvDate', 'BillingTyp', 'Plant', 'PlantName', 'Division',
+        ['CompCode', 'Invno.', 'InvDate', 'LineItemNo', 'BillingTyp', 'Plant', 'PlantName', 'Division',
          'DivDiscri', 'Bill2Party', 'Bil2PrtNme', 'BillStatCd', 'BillStatNm', 'Bill2Distc', 'Ship2Party', 'ShpPrtyNm',
          'ItemCode', 'ItemDes', 'HSNCode', 'BatchNo', 'UOM', 'BatchQnt', 'NetAmt',
          'TAmtAftTax', 'GrandTotal', 'DistrnChnl', 'SalesEmply', 'HQCode']]
@@ -239,12 +245,13 @@ def loadSalesDataWithDelimiter(collection_name, datafile):
     salesColumns = salesColumns.to_dict(orient='records')
     salesDataList = []
     for sale in salesColumns:
+        updateIfExists(sales_collection_name, sale)
         salesObj = sales.setSalesData(sale)
         salesDataList.append(salesObj)
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
     f = open("salesData.txt", "w")
     f.close()
-    # collection_name.insert_many(salesDataList)
+    collection_name.insert_many(salesDataList)
     logging.info('Inserted salesDataList Data to collection - {}'.format(collection_name))
     return salesDataList
 
@@ -972,8 +979,9 @@ if __name__ == "__main__":
     # getCurrentMonthSalesDataByList()
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'Aishwarya21to26may.csv'
+    saleDatafile = 'ZSDLOG_27_TO_09_JUNE.csv'
     loadSalesData(sales_collection_name, saleDatafile)
+    # loadSalesDataWithDelimiter(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
