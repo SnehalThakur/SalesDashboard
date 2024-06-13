@@ -49,11 +49,11 @@ def saleDataFileLoader():
 async def lifespan(_: FastAPI):
     logging.info('app started....')
     scheduler = BackgroundScheduler()
-    # scheduler.add_job(id="job1", func=scp_file, trigger='cron', hour='*/8')
-    # scheduler.add_job(id="job2", func=saleDataFileLoader, trigger='cron', hour='*/8')
+    scheduler.add_job(id="job1", func=scp_file, trigger='cron', hour='*/8')
+    scheduler.add_job(id="job2", func=saleDataFileLoader, trigger='cron', hour='*/8')
 
-    scheduler.add_job(id="job1", func=scp_file, trigger='cron', minute='*/2')
-    scheduler.add_job(id="job2", func=saleDataFileLoader, trigger='cron', minute='*/2')
+    # scheduler.add_job(id="job1", func=scp_file, trigger='cron', minute='*/2')
+    # scheduler.add_job(id="job2", func=saleDataFileLoader, trigger='cron', minute='*/2')
     scheduler.start()
     yield
     logging.info('app stopped...')
