@@ -122,7 +122,7 @@ def get_session():
 
 
 def get_database():
-    clientCon = get_session()
+    clientCon = MongoClient(CONNECTION_STRING)
     # Create/Return the database
     return clientCon['aishconnect']
 
@@ -272,7 +272,7 @@ def loadSalesDataWithDelimiter(collection_name, datafile):
     salesColumns = salesColumns.to_dict(orient='records')
     salesDataList = []
     for sale in salesColumns:
-        updateIfExists(sales_collection_name, sale)
+        updateIfExists(collection_name, sale)
         salesObj = sales.setSalesData(sale)
         salesDataList.append(salesObj)
     # logging.info('Inserting salesDataList to MongoDB -', salesDataList)
