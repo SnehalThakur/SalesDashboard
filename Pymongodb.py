@@ -122,8 +122,9 @@ def get_session():
 
 
 def get_database():
+    clientCon = get_session()
     # Create/Return the database
-    return client['aishconnect']
+    return clientCon['aishconnect']
 
 
 def createTableUniqueIndex(collectionName):
@@ -159,6 +160,22 @@ def sales_update_or_insert_record(collection, salesData):
             # Insert a new record
             collection.insert_one(data)
             print("Record inserted successfully.")
+
+
+def saleDataLoader():
+    logging.info('Getting DB connection...')
+    dbname = get_database()
+
+    # Retrieve a collection named "salesdata" from database
+    sales_collection_name = dbname["sales_data"]
+
+    # currentMonthDates()
+    # getCurrentMonthSalesDataByList()
+    # createTableUniqueIndex(collection_name)
+
+    saleDatafile = 'ZSD_LOG.CSV'
+    # loadSalesData(sales_collection_name, saleDatafile)
+    loadSalesDataWithDelimiter(sales_collection_name, saleDatafile)
 
 
 def sales_ageing_update_or_insert_record(collection, data):
@@ -225,8 +242,17 @@ def loadSalesData(collection_name, datafile):
     return salesDataList
 
 
+def grandTotalValueConverter(x):
+    x = str(x).replace(',', '')
+    if "-" in x:
+        x = float(x[:-1])
+        x *= -1
+    return x
+
+
 # Load sales data
 def loadSalesDataWithDelimiter(collection_name, datafile):
+    logging.info('Loading sales data...')
     data = pd.read_csv(datafile, encoding='cp1252', delimiter=';')
     salesColumns = data[
         ['CompCode', 'Invno.', 'InvDate', 'LineItemNo', 'BillingTyp', 'Plant', 'PlantName', 'Division',
@@ -242,6 +268,7 @@ def loadSalesDataWithDelimiter(collection_name, datafile):
         salesColumns[['CompCode', 'Division', 'Ship2Party', 'Plant', 'BillStatCd', 'ItemCode', 'HSNCode',
                       'DistrnChnl', 'Bill2Party']].fillna(0)
     salesColumns = salesColumns.fillna('')
+    salesColumns['GrandTotal'] = salesColumns['GrandTotal'].apply(lambda x: grandTotalValueConverter(x))
     salesColumns = salesColumns.to_dict(orient='records')
     salesDataList = []
     for sale in salesColumns:
@@ -979,9 +1006,9 @@ if __name__ == "__main__":
     # getCurrentMonthSalesDataByList()
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'ZSDLOG_27_TO_09_JUNE.csv'
-    loadSalesData(sales_collection_name, saleDatafile)
-    # loadSalesDataWithDelimiter(sales_collection_name, saleDatafile)
+    saleDatafile = 'ZSD_LOG.csv'
+    # loadSalesData(sales_collection_name, saleDatafile)
+    loadSalesDataWithDelimiter(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #

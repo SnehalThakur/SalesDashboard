@@ -34,14 +34,26 @@ def job_counter():
 
 
 def scp_file():
+    logging.info('SCP file copy started...')
     os.system('sshpass -p "Sales@123@123" scp salesdata@136.232.18.118:/Sales_Dashboard/* .')
+    logging.info('SCP file copy completed...')
+
+
+def saleDataFileLoader():
+    logging.info('sales file loader started...')
+    Pymongodb.saleDataLoader()
+    logging.info('sales file loader completed...')
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     logging.info('app started....')
     scheduler = BackgroundScheduler()
-    scheduler.add_job(id="job1", func=scp_file, trigger='cron', hour='*/2')
+    # scheduler.add_job(id="job1", func=scp_file, trigger='cron', hour='*/8')
+    # scheduler.add_job(id="job2", func=saleDataFileLoader, trigger='cron', hour='*/8')
+
+    scheduler.add_job(id="job1", func=scp_file, trigger='cron', minute='*/2')
+    scheduler.add_job(id="job2", func=saleDataFileLoader, trigger='cron', minute='*/2')
     scheduler.start()
     yield
     logging.info('app stopped...')
