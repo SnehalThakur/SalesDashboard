@@ -269,6 +269,8 @@ def loadSalesDataWithDelimiter(collection_name, datafile):
                       'DistrnChnl', 'Bill2Party']].fillna(0)
     salesColumns = salesColumns.fillna('')
     salesColumns['GrandTotal'] = salesColumns['GrandTotal'].apply(lambda x: grandTotalValueConverter(x))
+    salesColumns['NetAmt'] = salesColumns['NetAmt'].apply(lambda x: grandTotalValueConverter(x))
+    salesColumns['TAmtAftTax'] = salesColumns['TAmtAftTax'].apply(lambda x: grandTotalValueConverter(x))
     salesColumns = salesColumns.to_dict(orient='records')
     salesDataList = []
     for sale in salesColumns:
@@ -402,7 +404,10 @@ def getIndicatorCurrentMonthYearVsLastMonthYear(salesDf):
         previousYearSalesDict = previousYearSalesData[0]
         previousYearSales = previousYearSalesDict.get('grandTotal')
 
-    rateChangeInPercentYearly = round((currentYearSales - previousYearSales) * 100 / previousYearSales, 3)
+    if previousYearSales != 0:
+        rateChangeInPercentYearly = round((currentYearSales - previousYearSales) * 100 / previousYearSales, 3)
+    else:
+        rateChangeInPercentYearly = round((currentYearSales - previousYearSales) * 100 , 3)
 
     currentMonthPreviousYearSales = 0
     currentMonthPreviousYearSalesDict = {}
@@ -411,8 +416,12 @@ def getIndicatorCurrentMonthYearVsLastMonthYear(salesDf):
         currentMonthPreviousYearSalesDict = currentMonthPreviousYearSalesData[0]
         currentMonthPreviousYearSales = currentMonthPreviousYearSalesDict.get('grandTotal')
 
-    rateChangeInPercentCurrentMonthLastYear = round(
+    if currentMonthPreviousYearSales != 0 :
+        rateChangeInPercentCurrentMonthLastYear = round(
         (currentMonthSales - currentMonthPreviousYearSales) * 100 / currentMonthPreviousYearSales, 3)
+    else:
+        rateChangeInPercentCurrentMonthLastYear = round(
+        (currentMonthSales - currentMonthPreviousYearSales) * 100, 3)
     # rateOfChangeInPercent = round((((previousMonthSales - currentMonthSales) / previousMonthSales) * 100), 3)
     indicatorList = []
     indicator = {
@@ -465,7 +474,11 @@ def getSalesTarget(salesTargetDf):
     for key, val in previousMonthSalesTarget.items():
         previousMonthSalesTargetVal = val
 
-    rateChangeInPercentMonthly = round((currentMonthSalesTargetVal - previousMonthSalesTargetVal) * 100 / previousMonthSalesTargetVal, 3)
+    if previousMonthSalesTargetVal != 0 :
+        rateChangeInPercentMonthly = round((currentMonthSalesTargetVal - previousMonthSalesTargetVal) * 100 / previousMonthSalesTargetVal, 3)
+    else:
+        rateChangeInPercentMonthly = round(
+            (currentMonthSalesTargetVal - previousMonthSalesTargetVal) * 100, 3)
 
     currentYearSalesTarget = salesTargetDf[salesTargetDf["Year"].astype(int) == current_year].groupby(
         ['Year'])['MonthlySalesTarget'].sum().sort_values().to_dict()
@@ -476,8 +489,10 @@ def getSalesTarget(salesTargetDf):
 
     if len(previousYearSalesTarget) > 0:
         previousYearSalesTargetVal = previousYearSalesTarget[previousYear]
-        rateChangeInPercentYearly = round(
-            (currentYearSalesTarget[current_year] - previousYearSalesTargetVal) * 100 / previousYearSalesTargetVal, 3)
+        if previousYearSalesTargetVal != 0:
+            rateChangeInPercentYearly = round((currentYearSalesTarget[current_year] - previousYearSalesTargetVal) * 100 / previousYearSalesTargetVal, 3)
+        else:
+            rateChangeInPercentYearly = round((currentYearSalesTarget[current_year] - previousYearSalesTargetVal) * 100, 3)
     else:
         rateChangeInPercentYearly = 100
 
@@ -526,9 +541,12 @@ def getTargetAchievement(salesDf, salesTargetStats):
 
 def getSalesLastYear(currentMonthYearVsLastMonthYear):
     startTime_getSalesLastYear = time()
+    yoy = 0
+    if currentMonthYearVsLastMonthYear["previousYearSales"].get('grandTotal') is not None:
+        yoy = currentMonthYearVsLastMonthYear["previousYearSales"]['grandTotal']
     salesLastYear = {"MoM": currentMonthYearVsLastMonthYear["currentMonthPreviousYearSales"],
                      "MoMPct": currentMonthYearVsLastMonthYear["rateChangeInPercentCurrentMonthLastYear"],
-                     "YoY": currentMonthYearVsLastMonthYear["previousYearSales"]['grandTotal'],
+                     "YoY": yoy,
                      "YoYPct": currentMonthYearVsLastMonthYear["rateChangeYear"]}
     endTime_getSalesLastYear = time()
     logging.info("Time taken for getSalesLastYear() {}".format(endTime_getSalesLastYear - startTime_getSalesLastYear))
