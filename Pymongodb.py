@@ -756,16 +756,15 @@ def getSaleDataAndTransform(dbname):
     # itemList = list(itemDetails)
     salesDf = pd.DataFrame(itemDetails)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
-    # logging.info("salesDf['invoiceDate'] -"+ salesDf['invoiceDate'])
+    logging.info("salesDf['invoiceDate'] - " + salesDf['invoiceDate'] + " and " + salesDf['invoiceDate'][0])
+    logging.info("salesDf['invoiceDate'][0] - " + salesDf['invoiceDate'][0])
     # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
     if "-" in salesDf['invoiceDate'][0]:
-        logging.info("salesDf['invoiceDate'].str = ", salesDf['invoiceDate'].str)
         salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split("-", expand=True)[1].apply({
             lambda x: calendar.month_abbr[int(x)]
         })
         salesDf['invoiceYear'] = salesDf['invoiceDate'].str.split("-", expand=True)[2].astype('int64')
     elif "." in salesDf['invoiceDate'][0]:
-        logging.info("salesDf['invoiceDate'].str = ", salesDf['invoiceDate'].str)
         salesDf['invoiceMonth'] = salesDf['invoiceDate'].str.split(".", expand=True)[1].apply({
             lambda x: calendar.month_abbr[int(x)]
         })
