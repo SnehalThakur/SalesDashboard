@@ -756,7 +756,7 @@ def getSaleDataAndTransform(dbname):
     # itemList = list(itemDetails)
     salesDf = pd.DataFrame(itemDetails)
     salesDf['grandTotal'] = salesDf['grandTotal'].str.replace(',', '').astype('float64')
-    logging.info("salesDf['invoiceDate'] - " + salesDf['invoiceDate'] + " and " + salesDf['invoiceDate'][0])
+    logging.info("salesDf['invoiceDate'] - " + salesDf['invoiceDate'])
     logging.info("salesDf['invoiceDate'][0] - " + salesDf['invoiceDate'][0])
     # salesDf['invoiceDate'] = salesDf['invoiceDate'].str.replace("/", "-")
     if "-" in salesDf['invoiceDate'][0]:
@@ -1025,9 +1025,9 @@ if __name__ == "__main__":
     # getCurrentMonthSalesDataByList()
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'ZSD_LOG.csv'
-    # loadSalesData(sales_collection_name, saleDatafile)
-    loadSalesDataWithDelimiter(sales_collection_name, saleDatafile)
+    saleDatafile = 'SalesUpdated.csv'
+    loadSalesData(sales_collection_name, saleDatafile)
+    # loadSalesDataWithDelimiter(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
