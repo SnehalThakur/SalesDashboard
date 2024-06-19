@@ -1025,20 +1025,20 @@ if __name__ == "__main__":
     # getCurrentMonthSalesDataByList()
     # createTableUniqueIndex(collection_name)
 
-    saleDatafile = 'SalesUpdated.csv'
-    loadSalesData(sales_collection_name, saleDatafile)
+    # saleDatafile = 'SalesUpdated.csv'
+    # loadSalesData(sales_collection_name, saleDatafile)
     # loadSalesDataWithDelimiter(sales_collection_name, saleDatafile)
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
-    # ageingDataFile = 'latest_cust_aging.csv'
-    # customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
+    ageingDataFile = 'zcust_aging_new.csv'
+    customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
     #
-    # ageing_master_collection_name = dbname["ageing_master_data"]
-    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
+    ageing_master_collection_name = dbname["ageing_master_data"]
+    ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
     #
-    # ageing_collection_name = dbname["ageing_data"]
-    # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
+    ageing_collection_name = dbname["ageing_data"]
+    ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
 
     # Sales Target
     # salesTargetDataFile = 'SalesEmployeeTargetData.csv'
