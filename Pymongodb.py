@@ -178,6 +178,18 @@ def saleDataLoader():
     loadSalesDataWithDelimiter(sales_collection_name, saleDatafile)
 
 
+def ageingDataLoader():
+    logging.info('Getting DB connection...')
+    dbname = get_database()
+
+    ageingDataFile = 'ZCUST_AGING.CSV'
+    ageing_master_collection = dbname["ageing_master_data"]
+    ageing_collection = dbname["ageing_data"]
+    customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageing_master_collection, ageing_collection, ageingDataFile)
+    ageing.customerAgeingDataLoader(ageing_master_collection, customerAgeingList)
+    ageing.customerAgeingDataLoader(ageing_collection, customerAgeingReportDataList)
+
+
 def sales_ageing_update_or_insert_record(collection, data):
     # Check if data exists in MongoDB
     existing_data = collection.find_one(
@@ -1031,14 +1043,17 @@ if __name__ == "__main__":
     # # loadData(collection_name, r'C:\Users\snehal\PycharmProjects\BizwareDashboard\com\bizware\data\Sales_Report_Non
     # # SAP_22nd_Feb.csv')
     #
-    ageingDataFile = 'zcust_aging_new.csv'
-    customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageingDataFile)
-    #
-    ageing_master_collection_name = dbname["ageing_master_data"]
-    ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
-    #
-    ageing_collection_name = dbname["ageing_data"]
-    ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
+
+    ageingDataLoader()
+    # ageingDataFile = 'zcust_aging_new.csv'
+    # ageing_master_collection_name = dbname["ageing_master_data"]
+    # ageing_collection_name = dbname["ageing_data"]
+    # customerAgeingList, customerAgeingReportDataList = ageing.customerAgeingFileReaderAndLoader(ageing_master_collection_name, ageing_collection_name, ageingDataFile)
+    # #
+    # ageing.customerAgeingDataLoader(ageing_master_collection_name, customerAgeingList)
+    # #
+    # ageing.customerAgeingDataLoader(ageing_collection_name, customerAgeingReportDataList)
+
 
     # Sales Target
     # salesTargetDataFile = 'SalesEmployeeTargetData.csv'
